@@ -2,7 +2,7 @@
   "name": "kK Baseball",
   "short_name": "kK",
   "description": "Call the pitch before it is thrown, beat the book, and learn how a pitcher really works.",
-  "start_url": "./",
+  "start_url": "./?source=app",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -26,5 +26,5 @@
       "purpose": "maskable"
     }
   ],
-  "id": "./"
+  "id": "kk-baseball-app"
 }
