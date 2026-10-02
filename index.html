@@ -2000,6 +2000,7 @@ appEl.addEventListener("click", e => {
 });
 applyTheme();
 window.kk = A;
+if ("serviceWorker" in navigator && /^https?:/.test(location.href)) window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
 render(true);
 setInterval(() => { if (A.feed) render(false); }, 400);
 })();
