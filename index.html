@@ -1,0 +1,2009 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13274F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="kK">
+<title>kK Baseball</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0b1630; --panel:#0f1f42; --panel2:#13274F; --line:#3a4d72; --accent:#CE1141; --hi:#EAAA00; --primary:#13274F; --text:#f5f3ee; --muted:#a9b3c7; --ok:#3fbf7f; --no:#e5566f; }
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { margin:0; background:var(--bg); color:var(--text); }
+body { font:16px/1.45 "DM Sans", system-ui, sans-serif; min-height:100vh; }
+button { font:inherit; color:inherit; cursor:pointer; }
+h1, h2, h3, .big, .wm, .cnt { font-family:"Bricolage Grotesque", "DM Sans", sans-serif; }
+h2 { font-size:22px; margin:2px 0 10px; } h3 { font-size:16px; margin:14px 0 8px; color:var(--hi); }
+p { margin:8px 0; }
+.k { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.foot { color:var(--muted); font-size:13px; }
+.center { text-align:center; }
+#app { max-width:560px; margin:0 auto; padding-bottom:84px; }
+header { position:relative; z-index:5; background:linear-gradient(180deg, var(--primary), var(--bg)); padding:10px 14px 10px; border-bottom:3px solid var(--accent); }
+.hrow { display:flex; align-items:center; gap:10px; }
+.brand, .gear { background:none; border:0; padding:0; color:var(--text); }
+.gear { font-size:22px; width:44px; height:44px; }
+.logo { display:block; color:var(--text); }
+.score { flex:1; display:flex; justify-content:center; gap:22px; font-size:24px; font-family:"Bricolage Grotesque", sans-serif; }
+.score b { font-weight:800; }
+.hsub { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:13px; color:var(--muted); margin-top:4px; }
+.hsub .mode { margin-left:auto; }
+.minipace { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:13px; cursor:pointer; }
+.mpbar { position:relative; flex:0 0 38%; height:8px; border-radius:99px; background:rgba(255,255,255,.12); }
+.mpbar i { position:absolute; top:-4px; width:2px; height:16px; background:var(--hi); }
+.mpbar b { position:absolute; top:0; height:8px; border-radius:99px; }
+.mpbar b.up, .fill.up, .strip i.up { background:var(--accent); }
+.mpbar b.dn, .fill.dn, .strip i.dn { background:#6f86b8; }
+.sync, .vc { display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+.sync span { flex:1; min-width:150px; }
+.pitchbtn { background:var(--hi); color:#111; border:0; border-radius:12px; padding:12px 18px; font-weight:800; }
+.pitchbtn.sm { padding:8px 12px; }
+.vc button, .row button, .ghost { border:1px solid var(--line); background:transparent; border-radius:10px; padding:9px 12px; min-height:40px; }
+.vc button.on { background:var(--line); }
+.waiting { color:var(--hi); font-weight:700; padding:0 6px; }
+.link { background:none; border:0; color:var(--hi); text-decoration:underline; }
+.warn { margin-top:8px; background:#5a1a26; border-radius:8px; padding:8px 10px; font-size:13px; }
+main { padding:12px 12px 0; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin:0 0 12px; }
+.card.quiet p { color:var(--muted); }
+.act { background:var(--accent); color:#fff; border:0; border-radius:12px; padding:13px 16px; font-weight:700; min-height:46px; }
+.act.wide { width:100%; margin-top:6px; }
+.pills { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0; }
+.pills button { flex:1 1 30%; min-height:52px; border:1px solid var(--line); background:var(--panel2); border-radius:12px; padding:10px 8px; font-weight:600; font-size:15px; }
+.pills button.on, .seg button.on, .keypick.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.callcard { border:2px solid var(--accent); scroll-margin-bottom:84px; scroll-margin-top:8px; }
+.callhead { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.who { font-size:18px; font-weight:700; margin-top:2px; }
+.cnt { font-size:34px; font-weight:800; color:var(--hi); line-height:1; }
+.step { margin-top:12px; font-size:13px; font-weight:700; color:var(--hi); }
+.locked { background:rgba(234,170,0,.14); border-radius:10px; padding:8px 10px; font-size:14px; }
+.ctx .row3 { display:grid; grid-template-columns:86px 1fr; gap:8px; padding:7px 0; border-top:1px solid rgba(255,255,255,.07); }
+.ctx .row3:first-child { border-top:0; }
+.seq { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.pc { font-size:12.5px; background:var(--panel2); border-radius:7px; padding:3px 7px; }
+.pc i { color:var(--muted); font-style:normal; }
+.mx { display:inline-block; margin-right:10px; font-size:14px; }
+.mx b { color:var(--hi); }
+.read p { font-size:16px; }
+.abgrade .gl { font-size:14px; margin:4px 0; }
+.ok { color:var(--ok); font-weight:800; } .no { color:var(--no); font-weight:800; }
+.chip { position:fixed; left:50%; bottom:84px; transform:translateX(-50%); width:min(520px, calc(100% - 24px)); background:var(--panel2); border:2px solid var(--hi); border-radius:16px; padding:12px; z-index:9; box-shadow:0 10px 30px rgba(0,0,0,.45); }
+.cbar { height:4px; background:rgba(255,255,255,.12); border-radius:4px; margin-top:8px; overflow:hidden; } .cbar i { display:block; height:4px; background:var(--hi); }
+.tiles { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tile { background:var(--panel2); border-radius:12px; padding:10px; }
+.tile .big { font-size:17px; font-weight:800; margin:2px 0; }
+.meter { position:relative; height:34px; border-radius:10px; background:rgba(255,255,255,.08); margin:14px 0 4px; overflow:hidden; }
+.meter .band { position:absolute; top:0; height:34px; background:rgba(234,170,0,.22); }
+.meter .fill { position:absolute; top:11px; height:12px; border-radius:6px; }
+.meter .tick { position:absolute; top:0; width:3px; height:34px; background:var(--hi); margin-left:-1px; }
+.meter .dot { position:absolute; top:7px; width:20px; height:20px; border-radius:50%; background:#fff; margin-left:-10px; border:3px solid var(--accent); }
+.scale { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
+.pline { font-size:18px; font-weight:700; }
+.engines { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }
+.engines div { background:var(--panel2); border-radius:12px; padding:10px; }
+.engines b { display:block; font-size:22px; font-family:"Bricolage Grotesque", sans-serif; }
+.swing { padding:6px 0; border-top:1px solid rgba(255,255,255,.07); font-size:14px; }
+.keypick { display:block; width:100%; text-align:left; border:1px solid var(--line); background:var(--panel2); border-radius:12px; padding:12px; margin:8px 0; min-height:50px; }
+.key { border-left:4px solid var(--line); padding:8px 10px; margin:8px 0; background:var(--panel2); border-radius:8px; }
+.key.won { border-color:var(--ok); } .key.lost { border-color:var(--no); } .key.close { border-color:var(--hi); }
+.boxline { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0; text-align:center; }
+.boxline div { background:var(--panel2); border-radius:10px; padding:8px 4px; }
+.boxline b { display:block; font-size:26px; font-family:"Bricolage Grotesque", sans-serif; }
+.boxline span { font-size:11px; color:var(--muted); }
+.seg { display:flex; gap:6px; margin:6px 0 10px; flex-wrap:wrap; }
+.seg button { flex:1; border:1px solid var(--line); background:transparent; border-radius:10px; padding:9px 6px; font-size:13px; min-height:42px; }
+table { width:100%; border-collapse:collapse; font-size:14px; } th, td { text-align:left; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,.08); }
+.gp { padding:7px 0; border-top:1px solid rgba(255,255,255,.07); }
+nav { position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:center; gap:6px; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:rgba(8,14,30,.96); border-top:1px solid var(--line); z-index:6; }
+nav button { flex:1; max-width:130px; border:0; background:transparent; border-radius:12px; padding:11px 6px; font-weight:700; color:var(--muted); }
+nav button.on { background:var(--accent); color:#fff; }
+.toast { position:fixed; bottom:96px; left:50%; transform:translateX(-50%); width:min(520px, calc(100% - 24px)); background:#fff; color:#111; border-radius:12px; padding:12px 14px; z-index:20; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+.sheet { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:15; display:flex; align-items:flex-end; justify-content:center; }
+.sheetin { background:var(--panel); width:min(560px,100%); max-height:88vh; overflow:auto; border-radius:18px 18px 0 0; padding:16px 16px calc(20px + env(safe-area-inset-bottom)); }
+.sheetin label { display:block; margin:14px 0 4px; font-size:13px; font-weight:700; color:var(--hi); }
+.colors { display:flex; gap:10px; align-items:center; } .colors input { width:48px; height:42px; border:0; background:none; padding:0; }
+.txt { width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:11px; font:inherit; }
+.row { display:flex; gap:8px; margin-top:12px; } .row .txt { flex:1; }
+.start { padding:18px 12px; }
+.hero { text-align:center; padding:20px 8px 10px; }
+.hero .logo { margin:0 auto; }
+.hero h1 { font-size:46px; margin:4px 0; }
+.wm .mk { display:inline-block; transform:scaleX(-1); }
+.gamebtn { display:block; width:100%; text-align:left; border:1px solid var(--line); background:var(--panel2); border-radius:12px; padding:12px; margin:8px 0; }
+.gamebtn span { display:block; font-size:13px; color:var(--muted); margin-top:2px; }
+.how p { font-size:14px; color:var(--muted); }
+
+/* v2 */
+:focus-visible { outline:3px solid var(--hi); outline-offset:2px; }
+.vc { flex-wrap:nowrap; }
+.vc .lead { flex:0 0 96px; display:flex; }
+.vc .lead > * { width:100%; }
+.vc .speeds { display:flex; gap:4px; }
+.vc .speeds button { min-width:44px; padding:9px 6px; }
+.act.sm { padding:9px 10px; min-height:40px; font-size:14px; }
+.waiting { display:flex; align-items:center; justify-content:center; background:var(--hi); color:#111; border-radius:10px; font-weight:800; min-height:40px; padding:0 8px; }
+.minipace { width:100%; background:none; border:0; text-align:left; padding:0; color:var(--text); }
+.bookline { background:rgba(0,0,0,.22); border:1px solid var(--line); border-radius:12px; padding:7px 10px; margin:10px 0 4px; }
+.bookline .bk { color:var(--hi); }
+.mixrow .ml { color:var(--muted); font-size:12px; width:38px; display:inline-block; }
+.mixrow .mx { font-size:13.5px; margin-right:0; }
+.mixrow { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin-top:3px; }
+.coach { background:rgba(234,170,0,.14); border:1px solid var(--hi); border-radius:12px; padding:10px; margin:10px 0 4px; font-size:14px; }
+.callcard.pulse { animation:pulse 1.4s ease-out 1; }
+@keyframes pulse { 0% { box-shadow:0 0 0 0 var(--accent); } 100% { box-shadow:0 0 0 18px rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) { .callcard.pulse { animation:none; } }
+.locked { background:rgba(234,170,0,.16); border:2px solid var(--hi); border-radius:10px; padding:9px 11px; font-size:14px; color:var(--text); }
+.flash { border-left:5px solid var(--no); }
+.flash.good { border-left-color:var(--ok); }
+.flash p { margin:4px 0 0; }
+main.chipped { padding-bottom:200px; }
+.chipq { margin:2px 0 4px; font-size:14px; color:var(--muted); }
+.glove { border-top:1px solid var(--line); margin-top:8px; padding-top:8px; }
+.advgrid { display:grid; grid-template-columns:52px 1fr 52px; grid-template-rows:44px auto 44px; gap:4px; max-width:340px; margin:8px auto 4px; }
+.advgrid .top { grid-column:1 / 4; grid-row:1; }
+.advgrid .bot { grid-column:1 / 4; grid-row:3; }
+.advgrid .side.l { grid-column:1; grid-row:2; }
+.advgrid .side.r { grid-column:3; grid-row:2; }
+.advgrid .inner { grid-column:2; grid-row:2; display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+.advgrid button { border:1px solid var(--line); background:var(--panel2); border-radius:8px; font-size:12px; line-height:1.15; padding:4px 2px; min-height:44px; }
+.advgrid .ch { border-style:dashed; background:rgba(255,255,255,.04); color:var(--muted); }
+.advgrid .side { writing-mode:vertical-rl; transform:rotate(180deg); }
+.advgrid button.on { background:var(--accent); border-color:var(--accent); color:#fff; border-style:solid; }
+.strip { position:relative; display:flex; gap:3px; height:60px; margin:8px 0 4px; }
+.strip .axis { position:absolute; left:0; right:0; top:30px; height:1px; background:var(--muted); opacity:.6; }
+.strip i { flex:1; align-self:flex-start; border-radius:3px; }
+.strip i.up { height:var(--h); margin-top:calc(30px - var(--h)); background:var(--accent); }
+.strip i.dn { height:var(--h); margin-top:31px; background:#8ea6d8; }
+.strip i.empty { height:2px; margin-top:29px; background:rgba(255,255,255,.12); }
+.engines .foot { display:block; margin-top:4px; font-size:12px; }
+.headline { font-size:17px; font-weight:700; }
+.cmd { display:grid; grid-template-columns:90px 1fr 56px; gap:8px; align-items:center; margin-top:6px; }
+.cbar2 { height:10px; border-radius:6px; background:rgba(229,86,111,.55); overflow:hidden; }
+.cbar2 i { display:block; height:10px; background:var(--ok); }
+.filebtn { position:relative; display:inline-flex; align-items:center; justify-content:center; margin:0; font-size:15px; color:var(--text); font-weight:400; }
+.filebtn input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+details.more summary { cursor:pointer; font-weight:700; color:var(--hi); }
+.hero p { color:var(--muted); max-width:360px; margin:8px auto 0; }
+@media (max-width:380px) { .hsub .mode { display:none; } header { padding:8px 12px; } .callcard .who { font-size:16px; } .cnt { font-size:28px; } .bookline .mx { font-size:12.5px; } .step { margin-top:8px; } .score { font-size:21px; gap:14px; } .pills button { font-size:14px; min-height:48px; } .advgrid { grid-template-columns:44px 1fr 44px; } .cmd { grid-template-columns:74px 1fr 50px; } }
+.sofar { display:flex; flex-wrap:wrap; gap:4px; align-items:center; margin:10px 0 0; }
+.sofar .ml, .mixrow .ml { color:var(--muted); font-size:12px; width:44px; display:inline-block; }
+.sofar .pc { font-size:12px; padding:2px 6px; }
+.sync .waiting { flex:0 0 auto; }
+.callhead { position:sticky; top:0; z-index:2; background:var(--panel); margin:-14px -14px 0; padding:12px 14px 6px; border-radius:16px 16px 0 0; }
+@media (max-height:700px) { .sofar .pc:nth-last-child(n+4) { display:none; } .coach { font-size:13px; padding:8px; } .pills button { min-height:46px; } }
+/* v4 design pass */
+.k { font-size:12.5px; letter-spacing:.01em; text-transform:none; color:var(--muted); font-weight:600; }
+h3 { font-family:"DM Sans", sans-serif; font-size:12.5px; font-weight:600; letter-spacing:.01em; color:var(--muted); margin:2px 0 8px; }
+header { background:linear-gradient(180deg, var(--panel2), var(--bg)); }
+.score { align-items:center; gap:14px; }
+.score .sc { display:flex; align-items:baseline; gap:7px; }
+.score .ab { font:700 14px/1 "DM Sans", sans-serif; letter-spacing:.06em; color:var(--muted); }
+.score b { font:800 30px/1 "Bricolage Grotesque", sans-serif; font-variant-numeric:tabular-nums; }
+.score .sep { width:1px; height:24px; background:var(--line); }
+.minipace span:last-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vc .act { background:var(--accent); border-color:var(--accent); color:#fff; }
+nav button.on { background:transparent; color:var(--text); box-shadow:inset 0 3px 0 var(--accent); border-radius:0 0 12px 12px; }
+.sheetin .pills button.on { background:var(--text); color:var(--bg); border-color:var(--text); }
+.keypick.on { background:var(--panel2); border:2px solid var(--accent); color:var(--text); }
+.seg button.on { background:var(--text); color:var(--bg); border-color:var(--text); }
+.pills button { padding:10px 4px; }
+.pills.two button { flex:1 1 40%; }
+.bookline { padding:8px 10px 10px; }
+.mixrow { display:grid; grid-template-columns:44px repeat(3,1fr); gap:6px; align-items:end; margin-top:8px; }
+.mixrow .ml { width:auto; align-self:center; }
+.mixrow .mx { font-size:12px; color:var(--muted); line-height:1.2; }
+.mixrow .mx b { display:block; font:800 18px/1 "Bricolage Grotesque", sans-serif; color:var(--hi); margin-bottom:2px; }
+.callcard.is-locked { border-color:var(--hi); }
+.lockedlab { color:var(--hi); font-weight:700; }
+.locked { background:var(--panel2); border:0; box-shadow:inset 0 0 0 2px var(--hi); font-weight:500; }
+.locked b { color:var(--hi); }
+.coach { display:flex; gap:10px; align-items:flex-start; }
+.coach p { margin:0; flex:1; }
+.ghost.sm { min-height:40px; padding:9px 12px; flex:0 0 auto; }
+.flash { border:2px solid var(--no); }
+.flash.good { border-color:var(--ok); }
+.verdict { font:800 28px/1.05 "Bricolage Grotesque", sans-serif; }
+.flash .actual { font-size:15px; margin:6px 0 8px; }
+.vs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.vs > div { background:var(--panel2); border-radius:10px; padding:8px 10px; font-size:14px; }
+.vs .k { display:block; margin-bottom:2px; }
+.advgrid { grid-template-rows:44px auto 44px 22px; }
+.advgrid .inner { outline:2px solid rgba(255,255,255,.7); outline-offset:3px; border-radius:6px; }
+.advgrid .plate { grid-column:2; grid-row:4; width:44px; height:18px; justify-self:center; align-self:end; }
+.advgrid .plate path { fill:none; stroke:var(--muted); stroke-width:2; stroke-linejoin:round; }
+.paceHero { display:flex; align-items:baseline; gap:12px; margin-top:4px; }
+.paceHero b { font:800 56px/1 "Bricolage Grotesque", sans-serif; font-variant-numeric:tabular-nums; }
+.paceHero span { font-size:15px; }
+.pline { font-size:16px; font-weight:400; }
+.meter { overflow:visible; }
+.strip { height:76px; gap:3px; }
+.strip .axis { top:38px; }
+.strip i:nth-of-type(2n+1):not(:first-of-type) { margin-left:5px; }
+.strip i.up { margin-top:calc(38px - var(--h)); }
+.strip i.dn { margin-top:39px; }
+.strip i.empty { margin-top:37px; }
+.innings { display:grid; grid-template-columns:repeat(9,1fr); font-size:11px; color:var(--muted); text-align:center; margin-top:2px; }
+.final .fscore { font-size:30px; margin-bottom:8px; }
+.duel { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; text-align:center; background:var(--panel2); border-radius:14px; padding:12px 8px 8px; }
+.duel b { display:block; font:800 56px/1 "Bricolage Grotesque", sans-serif; font-variant-numeric:tabular-nums; }
+.duel span { font-size:13px; color:var(--muted); }
+.duel .vsw { font-size:14px; color:var(--muted); padding:0 6px; }
+.headline { font-size:16px; font-weight:500; }
+.hero { padding:28px 8px 14px; }
+.hero h1 { font-size:40px; line-height:1.05; margin:14px 0 6px; }
+.featured { border:2px solid var(--hi); }
+.featured h2 { margin:6px 0 2px; }
+.quietdemo .act { background:transparent; border:1px solid var(--line); color:var(--text); }
+.steps .step3 { padding:8px 0; border-top:1px solid rgba(255,255,255,.07); }
+.steps .step3:first-of-type { border-top:0; }
+.steps .step3 p { margin:2px 0 0; font-size:14px; color:var(--muted); }
+details.more summary { font-weight:600; color:var(--text); }
+@keyframes rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes stamp { 0% { transform:scale(1); } 40% { transform:scale(1.015); } 100% { transform:scale(1); } }
+@keyframes slide { from { left:var(--from); } }
+.flash.rise { animation:rise 220ms ease-out; }
+.callcard.stamp { animation:stamp 180ms ease-out; }
+.dot.slide { animation:slide 600ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .flash.rise, .callcard.stamp, .dot.slide { animation:none; } }
+@media (max-width:380px) { .score b { font-size:26px; } .paceHero b { font-size:46px; } .duel b { font-size:46px; } .mixrow .mx b { font-size:16px; } }
+.sheetin label { color:var(--muted); font-size:12.5px; font-weight:600; }
+.sheetin .pills, .seg { background:var(--bg); padding:4px; gap:4px; border-radius:12px; }
+.sheetin .pills button, .seg button { border:0; min-height:44px; background:transparent; }
+.sheetin .pills button.on, .seg button.on { background:var(--panel2); box-shadow:inset 0 0 0 2px var(--hi); color:var(--text); }
+.paceHero .muted { color:var(--muted); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* kK engine: pure logic shared by the app and the tests. */
+const KKE = (() => {
+  // ---------- pitch vocabulary ----------
+  const FAMILY = { FF:"fastball", SI:"fastball", FC:"fastball", FA:"fastball", FT:"fastball",
+    SL:"breaking", ST:"breaking", CU:"breaking", KC:"breaking", SV:"breaking", CS:"breaking",
+    CH:"offspeed", FS:"offspeed", FO:"offspeed", SC:"offspeed", KN:"offspeed", EP:"offspeed" };
+  const TYPE_NAME = { FF:"four-seam fastball", SI:"sinker", FC:"cutter", FA:"fastball", FT:"two-seam fastball",
+    SL:"slider", ST:"sweeper", CU:"curveball", KC:"knuckle curve", SV:"slurve", CS:"slow curve",
+    CH:"changeup", FS:"splitter", FO:"forkball", SC:"screwball", KN:"knuckleball", EP:"eephus" };
+  const SHORT = { FF:"Four-seam", SI:"Sinker", FC:"Cutter", FA:"Fastball", FT:"Two-seam", SL:"Slider", ST:"Sweeper", CU:"Curveball",
+    KC:"Knuckle curve", SV:"Slurve", CS:"Slow curve", CH:"Changeup", FS:"Splitter", FO:"Forkball", SC:"Screwball", KN:"Knuckleball", EP:"Eephus" };
+  const FAM_NAME = { fastball:"Fastball", breaking:"Breaking ball", offspeed:"Offspeed" };
+  const LOC_NAME = { up:"Up", down:"Down", off:"Off the plate" };
+  const LOC_WORDS = { up:"up", down:"down", off:"off the plate" };
+  const ADV = ["H-in","H-mid","H-away","M-in","M-mid","M-away","L-in","L-mid","L-away","C-high","C-low","C-in","C-away"];
+  const ADV_NAME = { "H-in":"High in", "H-mid":"High middle", "H-away":"High away", "M-in":"Middle in", "M-mid":"Middle", "M-away":"Middle away",
+    "L-in":"Low in", "L-mid":"Low middle", "L-away":"Low away", "C-high":"Chase high", "C-low":"Chase low", "C-in":"Chase in", "C-away":"Chase away" };
+  const fam = t => FAMILY[t] || null;
+  const HALF_PLATE = 0.83; // feet: half of 17 inches plus the ball's radius
+
+  // ---------- location ----------
+  // Where a pitch crossed, relative to the hitter. Returns { base, adv } or null.
+  function spotOf(pd, hand){
+    if (!pd) return null;
+    const c = pd.coordinates || {}, top = pd.strikeZoneTop, bot = pd.strikeZoneBottom;
+    if (c.pX != null && c.pZ != null && top && bot) {
+      const x = c.pX, z = c.pZ;
+      const inside = hand === "L" ? x > 0 : x < 0;
+      const dz = z > top ? z - top : z < bot ? bot - z : 0;
+      const dx = Math.max(0, Math.abs(x) - HALF_PLATE);
+      const mid = (top + bot) / 2;
+      if (dz === 0 && dx === 0) {
+        const row = z > bot + (top-bot)*2/3 ? "H" : z < bot + (top-bot)/3 ? "L" : "M";
+        const col = Math.abs(x) <= HALF_PLATE/3 ? "mid" : inside ? "in" : "away";
+        return { base: z >= mid ? "up" : "down", adv: row + "-" + col };
+      }
+      if (dx > dz) return { base:"off", adv: inside ? "C-in" : "C-away" };
+      return { base: z >= mid ? "up" : "down", adv: z > top ? "C-high" : "C-low" };
+    }
+    // Fallback to the Gameday zone number (catcher's view).
+    const zn = pd.zone; if (zn == null) return null;
+    if (zn >= 11) return { base: zn <= 12 ? "up" : "down", adv: zn <= 12 ? "C-high" : "C-low" };
+    if (zn < 1 || zn > 9) return null;
+    const r = Math.floor((zn-1)/3), cc = (zn-1)%3;
+    const leftIsInside = hand !== "L"; // a right-handed hitter stands on the catcher's left
+    const col = cc === 1 ? "mid" : (cc === 0) === leftIsInside ? "in" : "away";
+    return { base: r === 2 ? "down" : "up", adv: ["H","M","L"][r] + "-" + col };
+  }
+  function advPartial(call, actual){
+    if (!call || !actual) return 0;
+    if (call === actual) return 1;
+    const [cr, cc] = call.split("-"), [ar, ac] = actual.split("-");
+    // Half credit for the right row or column inside the zone. Chase cells must be exact.
+    if (cr !== "C" && ar !== "C") return (cr === ar || cc === ac) ? 0.5 : 0;
+    return 0;
+  }
+
+  // ---------- counts ----------
+  function bucket(balls, strikes){
+    if (balls === 3 && strikes === 2) return "full";
+    if (strikes >= 2) return "two";
+    if (balls === 0 && strikes === 0) return "first";
+    if (balls === 0 && strikes === 1) return "ahead";
+    if (balls === strikes) return "even";
+    return "behind";
+  }
+  const BUCKET_NAME = { first:"on the first pitch", ahead:"at 0-1", even:"in even counts", behind:"in hitter's counts", two:"with two strikes", full:"at 3-2" };
+
+  // ---------- book ----------
+  function emptyCell(){ return { n:0, type:{}, fam:{}, base:{}, adv:{} }; }
+  function newBook(id, name){ return { id, name, n:0, cells:{}, fps:{n:0,s:0}, velo:{}, games:0 }; }
+  function bookAdd(book, hand, bkt, type, spot, speed){
+    const f = fam(type); if (!f) return;
+    for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) {
+      const c = book.cells[key] || (book.cells[key] = emptyCell());
+      c.n++; c.type[type]=(c.type[type]||0)+1; c.fam[f]=(c.fam[f]||0)+1;
+      if (spot) { c.base[spot.base]=(c.base[spot.base]||0)+1; c.adv[spot.adv]=(c.adv[spot.adv]||0)+1; }
+    }
+    if (speed) { const v = book.velo[type] || (book.velo[type] = { s:0, n:0 }); v.s += speed; v.n++; }
+    book.n++;
+  }
+  function bookCell(book, hand, bkt){
+    if (!book) return null;
+    for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) { const c = book.cells[key]; if (c && c.n >= 15) return { cell:c, key }; }
+    const c = book.cells["*|*"]; return c && c.n ? { cell:c, key:"*|*" } : null;
+  }
+  // A league-style stand-in for pitchers with no book yet.
+  function genericBook(){
+    const b = newBook(0, "League average");
+    const mix = { first:{FF:.58,SL:.22,CH:.12,CU:.08}, ahead:{FF:.45,SL:.28,CH:.14,CU:.13}, even:{FF:.50,SL:.24,CH:.15,CU:.11},
+      behind:{FF:.66,SL:.16,CH:.13,CU:.05}, two:{FF:.42,SL:.32,CH:.13,CU:.13}, full:{FF:.62,SL:.22,CH:.12,CU:.04} };
+    const spots = { fastball:{ "H-in":.10,"H-mid":.08,"H-away":.10,"M-in":.06,"M-mid":.05,"M-away":.08,"L-in":.05,"L-mid":.04,"L-away":.08,"C-high":.12,"C-low":.04,"C-in":.08,"C-away":.12 },
+      other:{ "H-in":.03,"H-mid":.03,"H-away":.04,"M-in":.04,"M-mid":.04,"M-away":.07,"L-in":.06,"L-mid":.06,"L-away":.11,"C-high":.03,"C-low":.25,"C-in":.06,"C-away":.18 } };
+    const baseOf = a => a === "C-in" || a === "C-away" ? "off" : (a[0] === "L" || a === "C-low") ? "down" : "up";
+    for (const hand of ["L","R"]) for (const bkt in mix) for (const t in mix[bkt]) {
+      const sp = spots[fam(t) === "fastball" ? "fastball" : "other"];
+      for (const a in sp) { const n = Math.round(mix[bkt][t] * sp[a] * 400); for (let i = 0; i < n; i++) bookAdd(b, hand, bkt, t, { base: baseOf(a), adv: a }); }
+    }
+    b.fps = { n:100, s:61 }; b.generic = true;
+    return b;
+  }
+  function prob(map, k, n, kinds){ return ((map[k]||0) + 0.5) / (n + 0.5*kinds); }
+  function argmax(map, area){ let best=null, v=-1; for (const k in map) { const x = map[k] / (area ? (area[k] || 1) : 1); if (x > v){ v=x; best=k; } } return best; }
+  // Chase cells cover far more area than a zone cell, so the book weighs them by size when it picks a spot.
+  const AREA = { "C-high":3, "C-low":3, "C-in":3, "C-away":3 };
+  function arsenal(book){
+    const c = book && book.cells["*|*"]; if (!c || !c.n) return ["FF","SL","CH","CU"];
+    return Object.keys(c.type).filter(t => c.type[t]/c.n >= 0.03).sort((a,b)=>c.type[b]-c.type[a]);
+  }
+  function mixLine(book, hand, bkt, level){
+    const bc = bookCell(book, hand, bkt); if (!bc) return { pitch:[], spot:[], key:null, n:0 };
+    const c = bc.cell, top = (map, n) => Object.keys(map).sort((a,b)=>map[b]-map[a]).slice(0,n).map(k => ({ k, pct: Math.round(100*map[k]/c.n) }));
+    return level === "advanced" ? { pitch: top(c.type, 3), spot: top(c.adv, 3), key: bc.key, n:c.n } : { pitch: top(c.fam, 3), spot: top(c.base, 3), key: bc.key, n:c.n };
+  }
+  function bookCall(book, hand, bkt, level){
+    const bc = bookCell(book, hand, bkt);
+    if (!bc) return level === "advanced" ? { pitch:"FF", spot:"H-away" } : { pitch:"fastball", spot:"up" };
+    const c = bc.cell;
+    return level === "advanced" ? { pitch: argmax(c.type) || "FF", spot: argmax(c.adv, AREA) || "M-away" } : { pitch: argmax(c.fam) || "fastball", spot: argmax(c.base) || "up" };
+  }
+  function weights(book, hand, bkt, level, call){
+    const bc = bookCell(book, hand, bkt);
+    if (!bc) return { wp:1.5, ws:1.5 };
+    const c = bc.cell;
+    const pp = level === "advanced" ? prob(c.type, call.pitch, c.n, Math.max(3, Object.keys(c.type).length)) : prob(c.fam, call.pitch, c.n, 3);
+    const ps = level === "advanced" ? prob(c.adv, call.spot, c.n, 13) : prob(c.base, call.spot, c.n, 3);
+    return { wp: Math.min(5, 1/pp), ws: Math.min(5, 1/ps) };
+  }
+  // Grade a call against the pitch. The glove answer never affects the grade.
+  function grade(call, actual, level){
+    const pitchRight = level === "advanced" ? call.pitch === actual.type : call.pitch === fam(actual.type);
+    let spotCredit = 0;
+    if (actual.spot) spotCredit = level === "advanced" ? advPartial(call.spot, actual.spot.adv) : (call.spot === actual.spot.base ? 1 : 0);
+    return { pitchRight, spotCredit };
+  }
+  function pointsFor(g, w, big){
+    let p = (g.pitchRight ? w.wp : 0) + g.spotCredit * w.ws;
+    if (g.pitchRight && g.spotCredit === 1) p += 1;
+    return Math.round(p * (big ? 2 : 1) * 10) / 10;
+  }
+
+  // ---------- Monte Carlo run engine ----------
+  const BASE = { bb:0.090, s1:0.142, s2:0.044, s3:0.004, hr:0.031 };
+  function paProbs(factor){
+    const on = BASE.bb+BASE.s1+BASE.s2+BASE.s3+BASE.hr;
+    // factor is a run multiplier (1 = league average); runs scale with roughly the 2.5 power of on-base rates.
+    const f = Math.max(0.35, Math.min(2.4, factor || 1));
+    const scale = Math.min(0.62/on, 1.04 * Math.pow(f, 0.4));
+    return { bb:BASE.bb*scale, s1:BASE.s1*scale, s2:BASE.s2*scale, s3:BASE.s3*scale, hr:BASE.hr*Math.pow(scale,1.25) };
+  }
+  function rng(seed){ let s = seed>>>0 || 1; return () => { s ^= s<<13; s>>>=0; s ^= s>>>17; s ^= s<<5; s>>>=0; return s/4294967296; }; }
+  function halfInning(team, state, R, maxRunsWalkoff){
+    let outs = state.outs||0, bases = state.bases||0, runs = 0, i = team.idx;
+    while (outs < 3) {
+      const p = team.factor(i % 9, team.faced++).p; const r = R();
+      let c = 0;
+      if (r < (c += p.bb)) { if (bases & 1) { if (bases & 2) { if (bases & 4) runs++; bases |= 4; } bases |= 2; } bases |= 1; }
+      else if (r < (c += p.s1)) { let nb = 1; if (bases & 4) runs++; if (bases & 2) { if (R() < 0.6) runs++; else nb |= 4; } if (bases & 1) { if (!(nb & 4) && R() < 0.28) nb |= 4; else nb |= 2; } bases = nb; }
+      else if (r < (c += p.s2)) { let nb = 2; runs += (bases & 4 ? 1:0) + (bases & 2 ? 1:0); if (bases & 1) { if (R() < 0.42) runs++; else nb |= 4; } bases = nb; }
+      else if (r < (c += p.s3)) { runs += ((bases&1)?1:0)+((bases&2)?1:0)+((bases&4)?1:0); bases = 4; }
+      else if (r < (c += p.hr)) { runs += 1 + ((bases&1)?1:0)+((bases&2)?1:0)+((bases&4)?1:0); bases = 0; }
+      else { outs++;
+        if (outs < 3) {
+          if (bases & 4 && R() < 0.30) { runs++; bases &= ~4; }
+          if (bases & 1 && R() < 0.11) { outs++; bases &= ~1; }
+          else if (bases & 2 && !(bases & 4) && R() < 0.22) { bases = (bases & ~2) | 4; }
+        }
+      }
+      i++;
+      if (maxRunsWalkoff != null && runs > maxRunsWalkoff) break;
+    }
+    team.idx = i % 9;
+    return runs;
+  }
+  /* st = { inning, top, outs, bases, away, home, ghost }
+     teams.away/home: { idx, offense:[9 run factors], pitching:{ current, remaining (batters), pen } }; pitching is that team's own staff. */
+  function simulate(st, teams, n, seed){
+    const R = rng(seed || 12345);
+    let awayWins = 0;
+    for (let k = 0; k < n; k++) {
+      let inning = st.inning, top = st.top, outs = st.outs||0, bases = st.bases||0, away = st.away, home = st.home;
+      const bat = { away:{ idx: teams.away.idx }, home:{ idx: teams.home.idx } };
+      const arm = { away:{ left: teams.away.pitching.remaining }, home:{ left: teams.home.pitching.remaining } };
+      let guard = 0;
+      while (guard++ < 40) {
+        const side = top ? "away" : "home", def = top ? "home" : "away";
+        const T = teams[side], D = teams[def];
+        const team = { idx: bat[side].idx, faced:0, factor: (slot) => { const pf = arm[def].left > 0 ? D.pitching.current : D.pitching.pen; arm[def].left--; return { p: paProbs(T.offense[slot] * pf) }; } };
+        if (outs === 0 && bases === 0 && inning > 9 && st.ghost) bases = 2;
+        const walkoff = (!top && inning >= 9) ? (away - home) : null;
+        const r = halfInning(team, { outs, bases }, R, walkoff);
+        bat[side].idx = team.idx;
+        if (top) away += r; else home += r;
+        outs = 0; bases = 0;
+        if (top) { top = false; if (inning >= 9 && home > away) break; }
+        else { if (inning >= 9 && home !== away) break; top = true; inning++; if (inning > 15) { if (R() < 0.5) away = home + 1; else home = away + 1; break; } }
+      }
+      if (away > home) awayWins++;
+    }
+    return awayWins / n;
+  }
+
+  // ---------- Pythagorean foundation ----------
+  function pyth(rs, ra, exp){ exp = exp || 1.83; return Math.pow(rs,exp)/(Math.pow(rs,exp)+Math.pow(ra,exp)); }
+  // Regress a pitcher's ERA toward the league by innings pitched.
+  function regressERA(era, ip, lg){ if (!era || !ip) return null; const w = ip / (ip + 80); return w * era + (1 - w) * lg / 1.08; }
+  function pythPregame(f){
+    const share = 5.5/9;
+    const prevent = s => share * (s.starterERA ? s.starterERA * 1.08 : s.ra) + (1 - share) * s.ra;
+    const awayRuns = f.away.rs * prevent(f.home) / f.lg, homeRuns = f.home.rs * prevent(f.away) / f.lg;
+    const pAway = pyth(awayRuns, homeRuns) - 0.035;
+    return { pAway: Math.max(0.05, Math.min(0.95, pAway)), awayRuns, homeRuns };
+  }
+  const logit = p => Math.log(p/(1-p));
+  const sigm = x => 1/(1+Math.exp(-x));
+  function shiftWP(mlbAway, mlbAway0, pythAway, outsRecorded){
+    const clamp = p => Math.min(0.995, Math.max(0.005, p));
+    if (mlbAway >= 0.999 || mlbAway <= 0.001) return mlbAway;
+    const delta = logit(clamp(pythAway)) - logit(clamp(mlbAway0));
+    const rem = Math.max(0, (54 - outsRecorded) / 54);
+    return sigm(logit(clamp(mlbAway)) + delta * rem);
+  }
+
+  // ---------- what the fan has seen ----------
+  function ts(x){ return x ? Date.parse(x) : NaN; }
+  function view(feed, t){
+    const all = (feed.liveData && feed.liveData.plays && feed.liveData.plays.allPlays) || [];
+    const plays = [];
+    for (const p of all) {
+      if (!(ts(p.about.startTime) <= t)) break;
+      const pe = p.playEvents || [];
+      const evs = pe.filter(e => !(ts(e.startTime) > t));
+      const lastEv = pe[pe.length-1];
+      const complete = !!p.about.isComplete && evs.length === pe.length && (!lastEv || ts(lastEv.startTime) <= t);
+      plays.push({ src:p, evs, complete, pitches: evs.filter(e => e.isPitch) });
+    }
+    return plays;
+  }
+  // The latest count, from any event that carries one (pitch-clock violations and overturned challenges included).
+  function lastCount(evs){ for (let j = evs.length-1; j >= 0; j--) if (evs[j].count) return evs[j].count; return null; }
+  function basesAfter(p){ const m = p.matchup || {}; return (m.postOnFirst?1:0) | (m.postOnSecond?2:0) | (m.postOnThird?4:0); }
+  function sameHalf(a, b){ return !!(a && b && a.src.about.inning === b.src.about.inning && a.src.about.halfInning === b.src.about.halfInning); }
+  function prevPlay(plays, cur){ const i = plays.indexOf(cur); return i > 0 ? plays[i-1] : null; }
+  function basesBefore(plays, cur){
+    const pv = prevPlay(plays, cur);
+    if (!sameHalf(pv, cur)) return 0;
+    const lc = lastCount(pv.evs); if (lc && lc.outs >= 3) return 0;
+    return basesAfter(pv.src);
+  }
+  function outsBefore(plays, cur){
+    const pv = prevPlay(plays, cur);
+    if (!sameHalf(pv, cur)) return 0;
+    const lc = lastCount(pv.evs); return lc ? lc.outs % 3 : 0;
+  }
+  function stateOf(plays){
+    let away=0, home=0, inning=1, top=true, outs=0, bases=0, cur=null;
+    for (const v of plays) {
+      if (v.complete) { away = v.src.result.awayScore; home = v.src.result.homeScore; }
+      inning = v.src.about.inning; top = v.src.about.halfInning === "top"; cur = v;
+    }
+    let balls=0, strikes=0;
+    if (cur) {
+      if (!cur.complete) {
+        const lc = lastCount(cur.evs);
+        if (lc) { balls = Math.min(3, lc.balls); strikes = Math.min(2, lc.strikes); outs = lc.outs; } else outs = outsBefore(plays, cur);
+        bases = basesBefore(plays, cur);
+      } else {
+        const lc = lastCount(cur.evs); outs = lc ? lc.outs : 0;
+        if (outs >= 3) { outs = 0; bases = 0; } else bases = basesAfter(cur.src);
+      }
+    }
+    return { away, home, inning, top, outs, bases, balls, strikes, cur };
+  }
+  // The count before each pitch of a play.
+  function pitchStates(src){
+    const out = []; let b = 0, s = 0;
+    for (const e of src.playEvents || []) {
+      if (e.isPitch) out.push({ e, balls:b, strikes:s });
+      if (e.count) { b = Math.min(3, e.count.balls); s = Math.min(2, e.count.strikes); }
+    }
+    return out;
+  }
+  // Half-innings the fan has seen end. A finished game closes its last half even without three outs.
+  function completedHalves(plays, final){
+    const out = [];
+    for (let i = 0; i < plays.length; i++) {
+      const v = plays[i]; if (!v.complete) continue;
+      const lc = lastCount(v.evs), next = plays[i+1];
+      const halfOver = (lc && lc.outs >= 3) || (next && !sameHalf(next, v)) || (final && i === plays.length - 1);
+      if (halfOver) out.push({ inning: v.src.about.inning, top: v.src.about.halfInning === "top", playIndex: i, atBatIndex: v.src.about.atBatIndex });
+    }
+    return out;
+  }
+  // The plate appearance in which the winner took the lead for good.
+  function goAhead(plays){
+    const done = plays.filter(v => v.complete); if (!done.length) return null;
+    const last = done[done.length-1].src.result, winAway = last.awayScore > last.homeScore;
+    let idx = null, pa = 0, ph = 0;
+    for (const v of done) {
+      const a = v.src.result.awayScore, h = v.src.result.homeScore;
+      const ledBefore = winAway ? pa > ph : ph > pa, leadsNow = winAway ? a > h : h > a;
+      if (leadsNow && !ledBefore) idx = v;
+      if (!leadsNow) idx = null;
+      pa = a; ph = h;
+    }
+    return idx;
+  }
+
+  // ---------- sync ----------
+  // taps: wall-clock ms at three releases in a row. starts: pitch start times from the feed.
+  // Prefer three consecutive pitches whose spacing matches the taps, and take the smallest delay that fits.
+  function syncOffset(taps, starts){
+    if (taps.length < 2 || !starts.length) return null;
+    const st = starts.slice().sort((a,b)=>a-b), k = taps.length, cands = [];
+    for (let j = 0; j + k <= st.length; j++) {
+      const d = taps.map((t, i) => t - st[j+i]).sort((a,b)=>a-b);
+      const med = d[Math.floor(k/2)];
+      if (d[k-1] - d[0] <= 2500 && med >= -5000 && med <= 150000) cands.push({ med, spread: d[k-1] - d[0] });
+    }
+    if (cands.length) {
+      // Best fit wins; when two runs of pitches fit about equally well, take the smaller delay.
+      const best = Math.min.apply(null, cands.map(c => c.spread));
+      return Math.min.apply(null, cands.filter(c => c.spread <= best + 250).map(c => c.med));
+    }
+    // Fallback: allow a skipped pitch, still preferring the smallest delay.
+    let best = null;
+    for (let j = 0; j < st.length; j++) {
+      const d0 = taps[0] - st[j]; if (d0 < -5000 || d0 > 150000) continue;
+      let worst = 0;
+      for (let i = 1; i < k; i++) { const target = taps[i] - d0; let near = Infinity; for (const x of st) near = Math.min(near, Math.abs(x - target)); worst = Math.max(worst, near); }
+      if (worst <= 2500 && (best == null || d0 < best)) best = d0;
+    }
+    return best;
+  }
+
+  // ---------- keys ----------
+  const ON_BASE = new Set(["single","double","triple","home_run","walk","intent_walk","hit_by_pitch","field_error","catcher_interf"]);
+  const HITS = new Set(["single","double","triple","home_run"]);
+  const XBH = new Set(["double","triple","home_run"]);
+  const BB = new Set(["walk","intent_walk","hit_by_pitch"]);
+  function gameStats(plays, mySide, starters, oppTop3){
+    const s = { myPitchesSeen:0, myPA:0, myXBH:0, myBB:0, oppBB:0, starterOuts:0, starterIn:true, oppFP:0, oppFPS:0, top3OnBase:0, top3PA:0, myRuns:0, oppRuns:0 };
+    let lastOuts = 0, lastHalf = "";
+    for (const v of plays) {
+      const p = v.src; if (!v.complete) continue;
+      const battingSide = p.about.halfInning === "top" ? "away" : "home", opp = mySide === "away" ? "home" : "away";
+      const halfKey = p.about.inning + p.about.halfInning; if (halfKey !== lastHalf) { lastOuts = 0; lastHalf = halfKey; }
+      const lc = lastCount(v.evs), outsNow = lc ? lc.outs : lastOuts, outsMade = Math.max(0, outsNow - lastOuts); lastOuts = outsNow;
+      const ev = p.result.eventType, pid = p.matchup.pitcher.id;
+      if (battingSide === mySide) {
+        s.myPA++; s.myPitchesSeen += v.pitches.length;
+        if (XBH.has(ev)) s.myXBH++; if (BB.has(ev)) s.myBB++;
+        if (pid === starters[opp] && v.pitches.length) { s.oppFP++; const f = v.pitches[0].details; if (f.isStrike || f.isInPlay) s.oppFPS++; }
+      } else {
+        if (BB.has(ev)) s.oppBB++;
+        if (pid === starters[mySide]) s.starterOuts += outsMade; else s.starterIn = false;
+        if (oppTop3.includes(p.matchup.batter.id)) { s.top3PA++; if (ON_BASE.has(ev)) s.top3OnBase++; }
+      }
+      s.myRuns = mySide === "away" ? p.result.awayScore : p.result.homeScore;
+      s.oppRuns = mySide === "away" ? p.result.homeScore : p.result.awayScore;
+    }
+    return s;
+  }
+  // Lines are set so each key hits about half the time. sd puts margins on one scale so they compare across keys.
+  function keyCatalog(ctx){
+    const fpsLine = Math.round(ctx.oppFPS || 62);
+    return [
+      { id:"pitches", sd:0.3, lock:()=>null, text:`${ctx.me} hitters see 4.0 or more pitches per plate appearance.`,
+        grade:(s,ph)=>{ const v = s.myPA ? s.myPitchesSeen/s.myPA : 0; return { hit: v >= 4.0, live: v >= 4.0, margin: v - 4.0, show: s.myPA ? `${v.toFixed(2)} pitches per plate appearance` : "No plate appearances yet" }; } },
+      { id:"starter", sd:4, lock:s => s.starterOuts >= 15 ? "won" : !s.starterIn ? "lost" : null, text:`The ${ctx.me} starter records 15 or more outs.`,
+        grade:(s,ph)=>({ hit: s.starterOuts >= 15, live: s.starterOuts >= 15 || (s.starterIn && s.starterOuts >= 3 * Math.min(5, ph.innings) - 1), margin: s.starterOuts - 15, show:`${s.starterOuts} outs${s.starterIn ? " and still pitching" : ""}` }) },
+      { id:"fps", sd:10, lock:()=>null, text:`${ctx.oppStarter} gets a first-pitch strike on fewer than ${fpsLine}% of ${ctx.me} hitters, below his season rate.`,
+        grade:(s,ph)=>{ const v = s.oppFP ? 100*s.oppFPS/s.oppFP : 0; return { hit: s.oppFP > 0 && v < fpsLine, live: s.oppFP > 0 && v < fpsLine, margin: fpsLine - v, show: s.oppFP ? `${Math.round(v)}% of ${s.oppFP} hitters` : "No hitters faced yet" }; } },
+      { id:"xbh", sd:1.5, lock:s => s.myXBH >= 3 ? "won" : null, text:`The ${ctx.me} collect three or more extra-base hits.`,
+        grade:(s,ph)=>({ hit: s.myXBH >= 3, live: s.myXBH >= Math.floor(3 * Math.min(1, ph.innings/9)), margin: s.myXBH - 3, show:`${s.myXBH} extra-base hit${s.myXBH===1?"":"s"}` }) },
+      { id:"top3", sd:2, lock:s => s.top3OnBase > 4 ? "lost" : null, text:`The top three in the ${ctx.opp} order reach base four or fewer times.`,
+        grade:(s,ph)=>({ hit: s.top3OnBase <= 4, live: s.top3OnBase <= Math.ceil(4 * Math.min(1, ph.innings/9)), margin: 4 - s.top3OnBase, show:`${s.top3OnBase} time${s.top3OnBase===1?"":"s"} on base in ${s.top3PA} trip${s.top3PA===1?"":"s"} to the plate` }) },
+      { id:"walks", sd:2, lock:()=>null, text:`The ${ctx.me} draw more walks than their pitchers allow.`,
+        grade:(s,ph)=>({ hit: s.myBB > s.oppBB, live: s.myBB > s.oppBB, margin: s.myBB - s.oppBB - 0.5, show:`${s.myBB} drawn and ${s.oppBB} allowed` }) },
+    ];
+  }
+  function gradeKey(k, s, phase, innings){
+    const g = k.grade(s, { innings: innings || 9 });
+    const z = g.margin / k.sd;
+    if (phase === "final") return Object.assign({ status: g.hit ? "Hit" : "Missed", z }, g);
+    const lk = k.lock ? k.lock(s) : null;
+    if (lk) return Object.assign({ status: lk === "won" ? "Clinched" : "Out of reach", z }, g);
+    const close = Math.abs(z) < 0.25;
+    return Object.assign({ status: close ? "Too close to call" : g.live ? "On track" : "Off track", z }, g);
+  }
+
+  // ---------- the read: one factual sentence per plate appearance ----------
+  function nm(id, feed){
+    const p = feed.gameData.players["ID"+id]; if (!p) return "He";
+    return p.useLastName || p.lastName || p.boxscoreName || p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0];
+  }
+  const tn = t => TYPE_NAME[t] || "pitch";
+  function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+  const PHRASE = { "H-in":"up and in", "H-mid":"up", "H-away":"up and away", "M-in":"on the inner half", "M-mid":"over the middle", "M-away":"on the outer half", "L-in":"down and in", "L-mid":"down", "L-away":"down and away",
+    "C-high":"above the zone", "C-low":"below the zone", "C-in":"inside off the plate", "C-away":"off the plate away" };
+  function spotPhrase(e, hand){ const sp = spotOf(e.pitchData, hand); return sp ? PHRASE[sp.adv] : "that was not tracked"; }
+  function sentence(v, earlier, feed){
+    const p = v.src, hand = p.matchup.batSide.code;
+    const P = v.pitches.filter(e => e.details.type && e.details.type.code);
+    const pit = nm(p.matchup.pitcher.id, feed), bat = nm(p.matchup.batter.id, feed);
+    const ev = p.result.eventType;
+    if (ev === "intent_walk") return `${pit} walked ${bat} intentionally.`;
+    if (!P.length) return `${bat}'s plate appearance ended without a tracked pitch.`;
+    const last = P[P.length-1], lt = last.details.type.code, lw = spotPhrase(last, hand);
+    const ls = last.hitData && last.hitData.launchSpeed;
+    const prev = earlier.filter(x => x.src.matchup.batter.id === p.matchup.batter.id && x.src.matchup.pitcher.id === p.matchup.pitcher.id && x.pitches.some(e => e.details.type)).pop();
+    const prevLastE = prev ? prev.pitches.filter(e => e.details.type).pop() : null;
+    const echo = prevLastE ? (prevLastE.details.type.code === lt ? `, the same pitch that ended their matchup in the ${ordinal(prev.src.about.inning)}` : `, after a ${tn(prevLastE.details.type.code)} ended their matchup in the ${ordinal(prev.src.about.inning)}`) : "";
+    const before = P.slice(0,-1);
+    const fbUp = before.filter(e => fam(e.details.type.code) === "fastball" && (spotOf(e.pitchData, hand)||{}).base === "up").length;
+    const n = P.length, pitches = `${n} pitch${n===1?"":"es"}`;
+    const whiffedBefore = before.some(e => e.details.type.code === lt && (e.details.code === "S" || e.details.code === "W"));
+    if (ev === "strikeout" || ev === "strikeout_double_play") {
+      const how = last.details.code === "C" ? "caught him looking at" : "got him swinging at";
+      if (whiffedBefore) return `${pit} struck out ${bat} in ${pitches}. He ${how} a ${tn(lt)} ${lw}, the same pitch ${bat} had already swung through in the at-bat.`;
+      if (fbUp >= 2 && fam(lt) !== "fastball") return `${pit} showed ${bat} ${fbUp} fastballs up, then ${how} a ${tn(lt)} ${lw}${echo}.`;
+      return `${pit} struck out ${bat} in ${pitches}, and he ${how} a ${tn(lt)} ${lw}${echo}.`;
+    }
+    if (ev === "walk") {
+      const states = pitchStates(p), behind = states.find(x => x.balls - x.strikes >= 2), full = states.some(x => x.balls === 3 && x.strikes === 2);
+      const zone = P.filter(e => { const sp = spotOf(e.pitchData, hand); return sp && sp.adv[0] !== "C"; }).length;
+      const lead = behind ? `fell behind ${behind.balls}-${behind.strikes} and ` : full ? "battled to a full count and " : "";
+      const zoneTxt = zone === 0 ? "without one of them in the strike zone" : `with ${zone} of them in the strike zone`;
+      return `${pit} ${lead}walked ${bat} on ${pitches}, ${zoneTxt}. Ball four was a ${tn(lt)} ${lw}.`;
+    }
+    if (ev === "hit_by_pitch") return `${pit} hit ${bat} with a ${tn(lt)} on pitch ${n}.`;
+    if (ev === "field_error") return `${bat} reached on an error after putting a ${tn(lt)} ${lw} in play.`;
+    if (HITS.has(ev)) {
+      const verb = { single:"singled", double:"doubled", triple:"tripled", home_run:"homered" }[ev];
+      const sp = spotOf(last.pitchData, hand), centered = sp && ["M-mid","H-mid","M-in","M-away"].includes(sp.adv);
+      return `${bat} ${verb} on a ${tn(lt)} ${lw}${ls ? ` at ${Math.round(ls)} mph off the bat` : ""}${centered && ev !== "single" ? ", a pitch that caught a lot of the plate" : ""}${echo}.`;
+    }
+    if (ev === "sac_fly") return `${bat} drove a ${tn(lt)} ${lw} deep enough for a sacrifice fly.`;
+    if (ev === "grounded_into_double_play" || ev === "double_play") return `${pit} got a double play from ${bat} on a ${tn(lt)} ${lw}.`;
+    return `${pit} retired ${bat} on a ${tn(lt)} ${lw} after ${pitches}${ls && ls >= 100 ? `, though it left the bat at ${Math.round(ls)} mph` : ""}${echo}.`;
+  }
+
+  return { SHORT, FAMILY, TYPE_NAME, FAM_NAME, LOC_NAME, LOC_WORDS, ADV, ADV_NAME, BUCKET_NAME, fam, spotOf, advPartial, bucket,
+    newBook, bookAdd, bookCell, bookCall, weights, grade, pointsFor, arsenal, mixLine, genericBook,
+    paProbs, simulate, halfInning, rng, pyth, pythPregame, regressERA, shiftWP, logit, sigm,
+    view, stateOf, pitchStates, lastCount, completedHalves, goAhead, syncOffset, basesBefore, basesAfter,
+    gameStats, keyCatalog, gradeKey, sentence, ordinal, ON_BASE, tn, nm };
+})();
+if (typeof module !== "undefined") module.exports = KKE;
+
+</script>
+<script>
+/* kK demo: generates a full, feed-shaped simulated game so the app can be tested without a live game. */
+const KKDemo = (() => {
+  const E = (typeof KKE !== "undefined") ? KKE : require("./engine.js");
+  const P = (id, fullName, hand, side, extra) => Object.assign({ id, fullName, lastName: fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0], pitchHand:{code:hand||"R"}, batSide:{code:side||"R"} }, extra||{});
+  const ATL = { id:144, name:"Atlanta Braves", teamName:"Braves", abbreviation:"ATL", rs:4.72, ra:4.05,
+    lineup:[ P(901,"Drake Baldwin","R","L",{ops:.790}), P(902,"Ronald Acuña Jr.","R","R",{ops:.905}), P(903,"Matt Olson","R","L",{ops:.845}),
+      P(904,"Michael Harris II","L","L",{ops:.735}), P(905,"Mauricio Dubón","R","R",{ops:.690}), P(906,"Mike Yastrzemski","L","L",{ops:.720}),
+      P(907,"Austin Riley","R","R",{ops:.800}), P(908,"Ozzie Albies","R","S",{ops:.730}), P(909,"Nick Smith","R","L",{ops:.650}) ],
+    starter: P(950,"Tyler Mahle","R","R",{era:3.45, ip:150, mix:{FF:.46,FS:.27,SL:.17,CU:.10}, velo:{FF:94,FS:86,SL:84,CU:78}}),
+    pen:[ P(951,"Raisel Iglesias","R","R",{era:2.60, ip:60, mix:{SI:.35,CH:.33,SL:.32}, velo:{SI:95,CH:89,SL:86}}),
+      P(952,"Dylan Lee","L","L",{era:3.10, ip:58, mix:{FF:.55,SL:.45}, velo:{FF:93,SL:84}}),
+      P(953,"Will Suter","L","L",{era:3.60, ip:55, mix:{SI:.45,CH:.30,SL:.25}, velo:{SI:91,CH:84,SL:80}}),
+      P(954,"Aaron Bummer","L","L",{era:3.40, ip:52, mix:{SI:.52,ST:.30,FC:.18}, velo:{SI:93,ST:82,FC:89}}) ] };
+  const LAD = { id:119, name:"Los Angeles Dodgers", teamName:"Dodgers", abbreviation:"LAD", rs:5.15, ra:3.92,
+    lineup:[ P(801,"Shohei Ohtani","R","L",{ops:1.010}), P(802,"Mookie Betts","R","R",{ops:.810}), P(803,"Freddie Freeman","R","L",{ops:.860}),
+      P(804,"Kyle Tucker","R","L",{ops:.880}), P(805,"Max Muncy","R","L",{ops:.790}), P(806,"Tommy Edman","R","S",{ops:.720}),
+      P(807,"Will Smith","R","R",{ops:.780}), P(808,"Alex Call","R","L",{ops:.680}), P(809,"Andy Pages","R","R",{ops:.740}) ],
+    starter: P(850,"Yoshinobu Yamamoto","R","R",{era:2.75, ip:170, mix:{FS:.266,FF:.262,CU:.20,FC:.10,SI:.10,SL:.072}, velo:{FS:91,FF:96,CU:77,FC:91,SI:95,SL:86}}),
+    pen:[ P(851,"Blake Treinen","R","R",{era:3.00, ip:50, mix:{ST:.45,SI:.35,FC:.20}, velo:{ST:83,SI:96,FC:93}}),
+      P(852,"Alex Vesia","L","L",{era:2.90, ip:58, mix:{FF:.62,SL:.38}, velo:{FF:94,SL:86}}),
+      P(853,"Tanner Scott","L","L",{era:3.30, ip:57, mix:{FF:.52,SL:.48}, velo:{FF:97,SL:89}}),
+      P(854,"Michael Kopech","R","R",{era:3.50, ip:45, mix:{FF:.70,CT:0,SL:.20,FC:.10}, velo:{FF:98,SL:87,FC:93}}) ] };
+  const LG = { rpg:4.40, ops:.715 };
+
+  function mod(type, bkt, sameHand){
+    const f = E.fam(type);
+    let m = 1;
+    if (f === "fastball") m *= ({first:1.25, ahead:0.85, even:1, behind:1.55, two:0.72, full:1.4})[bkt];
+    if (f === "breaking") m *= ({first:0.9, ahead:1.3, even:1, behind:0.6, two:1.45, full:0.8})[bkt] * (sameHand ? 1.3 : 0.75);
+    if (f === "offspeed") m *= ({first:0.8, ahead:1.2, even:1.05, behind:0.8, two:1.35, full:1.0})[bkt] * (sameHand ? 0.7 : 1.35);
+    return m;
+  }
+  // Pitch choice depends on the count, the hand and what came before in the at-bat.
+  function pickType(pitcher, bkt, batHand, R, prev){
+    const same = pitcher.pitchHand.code === batHand;
+    prev = prev || [];
+    const last = prev[prev.length-1], last2 = prev[prev.length-2];
+    const fbUp = prev.filter(x => E.fam(x.type) === "fastball" && x.loc === "up").length;
+    const w = Object.entries(pitcher.mix).filter(([t,s])=>s>0).map(([t,s]) => {
+      let x = s * mod(t, bkt, same);
+      if (last && last.whiff && last.type === t) x *= 3.2;                 // go back to what he missed
+      if (last && last2 && last.type === t && last2.type === t && !last.whiff) x *= 0.35;  // rarely three in a row
+      if (bkt === "two" && fbUp >= 2 && E.fam(t) !== "fastball") x *= 3.5; // two fastballs up set up the putaway pitch
+      else if (bkt === "two" && fbUp === 1 && E.fam(t) !== "fastball") x *= 1.8;
+      if (bkt === "two" && fbUp === 0 && last && E.fam(last.type) !== "fastball" && E.fam(t) === "fastball") x *= 1.6; // soft away, then the heater
+      if (last && last.foul && E.fam(last.type) === "fastball" && E.fam(t) !== "fastball") x *= 1.25;
+      return [t, x];
+    });
+    const tot = w.reduce((a,b)=>a+b[1],0); let r = R()*tot;
+    for (const [t,x] of w) { if ((r -= x) <= 0) return t; }
+    return w[0][0];
+  }
+  const LOCMIX = { fastball:{up:.40, down:.18, wide:.20, high:.16, low:.06}, breaking:{up:.09, down:.30, wide:.27, high:.02, low:.32}, offspeed:{up:.07, down:.30, wide:.22, high:.01, low:.40} };
+  function zoneNum(pX, pZ, top, bot){
+    const h = 0.83, mid = (top+bot)/2;
+    if (Math.abs(pX) <= h && pZ >= bot && pZ <= top) {
+      const col = pX < -h/3 ? 0 : pX > h/3 ? 2 : 1, row = pZ > bot + (top-bot)*2/3 ? 0 : pZ < bot + (top-bot)/3 ? 2 : 1;
+      return row*3 + col + 1;
+    }
+    return pZ >= mid ? (pX < 0 ? 11 : 12) : (pX < 0 ? 13 : 14);
+  }
+  function pickLoc(type, bkt, R, batHand, prev){
+    const m = Object.assign({}, LOCMIX[E.fam(type)]);
+    if (bkt === "behind" || bkt === "full") { m.wide *= 0.6; m.high *= 0.6; m.low *= 0.6; }
+    if (bkt === "two") { m.low *= 1.35; m.wide *= 1.2; m.high *= 1.3; }
+    const last = (prev||[])[(prev||[]).length-1];
+    if (last && E.fam(last.type) === "fastball" && last.loc === "up" && E.fam(type) !== "fastball") { m.low *= 1.5; m.down *= 1.3; }
+    const keys = Object.keys(m), tot = keys.reduce((a,k)=>a+m[k],0); let r = R()*tot, loc = keys[0];
+    for (const k of keys) { if ((r -= m[k]) <= 0) { loc = k; break; } }
+    const top = 3.40, bot = 1.58, mid = (top+bot)/2;
+    const awaySign = batHand === "L" ? -1 : 1; // positive pX is away from a right-handed hitter
+    const side = R() < 0.62 ? awaySign : -awaySign;
+    let pX, pZ;
+    if (loc === "up") { pZ = mid + 0.05 + R()*(top - mid - 0.1); pX = (R()*1.5 - 0.75); }
+    else if (loc === "down") { pZ = bot + 0.05 + R()*(mid - bot - 0.1); pX = (R()*1.5 - 0.75); }
+    else if (loc === "wide") { pZ = bot + R()*(top-bot); pX = side * (0.95 + R()*0.6); }
+    else if (loc === "high") { pZ = top + 0.12 + R()*0.6; pX = (R()*1.6 - 0.8); }
+    else { pZ = bot - 0.12 - R()*0.8; pX = (R()*1.6 - 0.8); }
+    pX = Math.round(pX*1000)/1000; pZ = Math.round(pZ*1000)/1000;
+    return { zone: zoneNum(pX, pZ, top, bot), coordinates:{ pX, pZ }, strikeZoneTop: top, strikeZoneBottom: bot };
+  }
+
+  function generate(seed){
+    const R = E.rng(seed || 20261003);
+    const t0 = Date.UTC(2026,9,3,20,8,0);
+    let t = t0;
+    const iso = ms => new Date(ms).toISOString();
+    const teams = { away: ATL, home: LAD };
+    const players = {};
+    for (const T of [ATL, LAD]) for (const p of [...T.lineup, T.starter, ...T.pen]) players["ID"+p.id] = p;
+    const box = {};
+    for (const side of ["away","home"]) {
+      const T = teams[side], pl = {};
+      for (const p of T.lineup) pl["ID"+p.id] = { person:{id:p.id, fullName:p.fullName}, seasonStats:{ batting:{ ops: p.ops.toFixed(3) }, pitching:{} } };
+      for (const p of [T.starter, ...T.pen]) pl["ID"+p.id] = { person:{id:p.id, fullName:p.fullName}, seasonStats:{ batting:{}, pitching:{ era:p.era.toFixed(2), inningsPitched:String(p.ip) } } };
+      box[side] = { team:{ id:T.id, name:T.name, abbreviation:T.abbreviation }, battingOrder: T.lineup.map(p=>p.id), players: pl, pitchers:[] };
+    }
+    const order = { away:0, home:0 };
+    const arm = { away:{ p:ATL.starter, pc:0, runs:0, penIdx:0, starter:true, inningStart:0 }, home:{ p:LAD.starter, pc:0, runs:0, penIdx:0, starter:true, inningStart:0 } };
+    const allPlays = [];
+    let away = 0, home = 0, ab = 0;
+    for (let inning = 1; inning <= 15; inning++) {
+      for (const top of [true, false]) {
+        if (!top && inning >= 9 && home > away) break;
+        const bat = top ? "away" : "home", def = top ? "home" : "away";
+        const D = arm[def];
+        // pitching change between innings
+        if (D.starter && (D.pc >= 92 || D.runs >= 5)) { D.starter = false; D.p = teams[def].pen[0]; D.penIdx = 1; D.pc = 0; D.since = inning; }
+        else if (!D.starter && D.since < inning) { D.p = teams[def].pen[D.penIdx % teams[def].pen.length]; D.penIdx++; D.pc = 0; D.since = inning; }
+        let outs = 0, bases = [null,null,null];
+        t += 150000;
+        while (outs < 3) {
+          if (D.starter && D.pc >= 100) { D.starter = false; D.p = teams[def].pen[0]; D.penIdx = 1; D.pc = 0; D.since = inning; }
+          const batter = teams[bat].lineup[order[bat] % 9];
+          const pitcher = D.p;
+          const batHand = batter.batSide.code === "S" ? (pitcher.pitchHand.code === "R" ? "L" : "R") : batter.batSide.code;
+          const mFactor = Math.pow(batter.ops / LG.ops, 1.8) * (pitcher.era*1.08 / LG.rpg);
+          const playStart = t; t += 12000;
+          const events = [];
+          let balls = 0, strikes = 0, result = null, pitchNumber = 0; const prevP = [];
+          while (!result) {
+            const bkt = E.bucket(Math.min(3,balls), Math.min(2,strikes));
+            const type = pickType(pitcher, bkt, batHand, R, prevP);
+            const pd = pickLoc(type, bkt, R, batHand, prevP);
+            pd.startSpeed = Math.round(((pitcher.velo[type]||90) + (R()-0.5)*2.4)*10)/10;
+            const inZone = pd.zone <= 9;
+            const sp0 = E.spotOf(pd, batHand);
+            pitchNumber++; D.pc++;
+            const swingP = inZone ? (strikes === 2 ? 0.86 : 0.66) : (strikes === 2 ? 0.40 : 0.24);
+            let code, isStrike=false, isBall=false, isInPlay=false, desc, hit=null;
+            const r = R();
+            if (!inZone && r < 0.004) { code="H"; desc="Hit By Pitch"; result="hit_by_pitch"; }
+            else if (R() < swingP) {
+              const wh = (inZone ? 0.14 : 0.36) * (1.15 - 0.15*mFactor), fo = inZone ? 0.46 : 0.34;
+              const r2 = R();
+              if (r2 < wh) { code="S"; desc="Swinging Strike"; isStrike=true; strikes++; }
+              else if (r2 < wh + fo) { code="F"; desc="Foul"; isStrike=true; if (strikes < 2) strikes++; }
+              else { code="X"; desc="In play"; isInPlay=true; hit = inPlay(mFactor, inZone, R); result = hit.ev; }
+            } else {
+              if (inZone) { code="C"; desc="Called Strike"; isStrike=true; strikes++; }
+              else { code="B"; desc="Ball"; isBall=true; balls++; }
+            }
+            prevP.push({ type, loc: sp0 ? sp0.base : null, whiff: code === "S", foul: code === "F" });
+            if (!result && strikes >= 3) result = "strikeout";
+            if (!result && balls >= 4) result = "walk";
+            t += 4000 + Math.floor(R()*16000);
+            events.push({ details:{ call:{code, description:desc}, description:desc, code, isInPlay, isStrike, isBall, type:{ code:type, description:E.TYPE_NAME[type] } },
+              count:{ balls:Math.min(balls,4), strikes:Math.min(strikes,3), outs }, pitchData: pd, hitData: hit ? { launchSpeed: hit.ls, launchAngle: hit.la } : undefined,
+              index: events.length, pitchNumber, startTime: iso(t), endTime: iso(t+3000), isPitch:true, type:"pitch" });
+          }
+          // advance runners
+          let runs = 0; const b = bases, nb = [null,null,null];
+          const adv = (n) => { // force/advance n bases for everyone
+            for (let i = 2; i >= 0; i--) if (b[i]) { const to = i + n; if (to >= 3) runs++; else nb[to] = b[i]; } };
+          let isOut = false;
+          if (result === "walk" || result === "hit_by_pitch") { nb[0]=batter; nb[1]=b[1]; nb[2]=b[2]; if (b[0]) { if (b[1]) { if (b[2]) runs++; nb[2]=b[1]; } nb[1]=b[0]; } }
+          else if (result === "single") { adv(1); if (nb[2] && R()<0.6) { runs++; nb[2]=null; } nb[0]=batter; }
+          else if (result === "double") { adv(2); if (nb[2] && R()<0.42) { runs++; nb[2]=null; } nb[1]=batter; }
+          else if (result === "triple") { adv(3); nb[2]=batter; }
+          else if (result === "home_run") { adv(4); runs++; }
+          else { isOut = true; outs++; nb[0]=b[0]; nb[1]=b[1]; nb[2]=b[2];
+            if (result === "field_out" && outs < 3 && b[2] && R() < 0.3) { runs++; nb[2]=null; result = "sac_fly"; } }
+          bases = nb;
+          if (top) away += runs; else home += runs;
+          arm[def].runs += runs;
+          events[events.length-1].count.outs = outs;
+          const evName = { single:"Single", double:"Double", triple:"Triple", home_run:"Home Run", walk:"Walk", hit_by_pitch:"Hit By Pitch", strikeout:"Strikeout", field_out:"Flyout", sac_fly:"Sac Fly" }[result];
+          const verb = { single:"singles", double:"doubles", triple:"triples", home_run:"homers", walk:"walks", hit_by_pitch:"is hit by a pitch", strikeout:"strikes out", field_out:"flies out", sac_fly:"hits a sacrifice fly" }[result];
+          allPlays.push({
+            result:{ type:"atBat", event: evName, eventType: result, description:`${batter.fullName} ${verb}${result === "home_run" ? (runs > 1 ? `, and ${runs - 1} more ${runs - 1 === 1 ? "run scores" : "runs score"}` : "") : runs ? (runs === 1 ? ", and a run scores" : `, and ${runs} runs score`) : ""}.`, rbi:runs, awayScore:away, homeScore:home, isOut },
+            about:{ atBatIndex: ab++, halfInning: top?"top":"bottom", isTopInning: top, inning, startTime: iso(playStart), endTime: iso(t), isComplete:true },
+            count:{ balls, strikes, outs },
+            matchup:{ batter:{id:batter.id, fullName:batter.fullName}, batSide:{code:batHand}, pitcher:{id:pitcher.id, fullName:pitcher.fullName}, pitchHand:{code:pitcher.pitchHand.code},
+              postOnFirst: bases[0]?{id:bases[0].id}:undefined, postOnSecond: bases[1]?{id:bases[1].id}:undefined, postOnThird: bases[2]?{id:bases[2].id}:undefined },
+            playEvents: events
+          });
+          if (!box[def].pitchers.includes(pitcher.id)) box[def].pitchers.push(pitcher.id);
+          order[bat]++;
+          t += 20000;
+          if (!top && inning >= 9 && home > away) break;
+        }
+        if (!top && inning >= 9 && home !== away) break;
+      }
+      if (inning >= 9 && home !== away) break;
+    }
+    return {
+      gamePk: 1, demo: true,
+      gameData:{ game:{ pk:1, type:"D" }, datetime:{ dateTime: iso(t0) }, status:{ abstractGameState:"Live", detailedState:"In Progress" },
+        teams:{ away:{ id:ATL.id, name:ATL.name, teamName:ATL.teamName, abbreviation:ATL.abbreviation }, home:{ id:LAD.id, name:LAD.name, teamName:LAD.teamName, abbreviation:LAD.abbreviation } },
+        players, probablePitchers:{ away:{ id:ATL.starter.id, fullName:ATL.starter.fullName }, home:{ id:LAD.starter.id, fullName:LAD.starter.fullName } } },
+      liveData:{ plays:{ allPlays }, boxscore:{ teams: box } },
+      standings: { lg: LG.rpg, teams: { 144:{ rs:ATL.rs, ra:ATL.ra }, 119:{ rs:LAD.rs, ra:LAD.ra } } },
+      t0
+    };
+  }
+  function inPlay(m, inZone, R){
+    const pHit = Math.min(0.48, 0.33 * Math.pow(m, 0.35) * (inZone ? 1.05 : 0.8));
+    const ls = Math.round((inZone ? 88 : 82) + (R()-0.4)*30);
+    if (R() < pHit) {
+      const r = R(), hr = 0.10 * Math.pow(m,0.5) * (inZone?1.2:0.6);
+      const ev = r < hr ? "home_run" : r < hr + 0.2 ? "double" : r < hr + 0.22 ? "triple" : "single";
+      return { ev, ls: Math.max(ls, ev==="home_run"?100:ev==="double"?94:85) + Math.round(R()*6), la: ev==="home_run"?28:14 };
+    }
+    return { ev:"field_out", ls, la: Math.round(R()*50-10) };
+  }
+  // Books built straight from each demo pitcher's profile (stand-in for a season of pitch logs).
+  function books(){
+    const R = E.rng(777), out = {};
+    for (const T of [ATL, LAD]) for (const p of [T.starter, ...T.pen]) {
+      const bk = E.newBook(p.id, p.fullName);
+      for (let i = 0; i < 2600; i++) {
+        const hand = R() < 0.5 ? "L" : "R";
+        const bkt = ["first","ahead","even","behind","two","two","full"][Math.floor(R()*7)];
+        const type = pickType(p, bkt, hand, R, []);
+        const pd = pickLoc(type, bkt, R, hand, []);
+        E.bookAdd(bk, hand, bkt, type, E.spotOf(pd, hand), (p.velo[type]||90) + (R()-0.5)*2);
+        if (bkt === "first") { bk.fps.n++; if (pd.zone <= 9 || R() < 0.3) bk.fps.s++; }
+      }
+      bk.games = 30;
+      out[p.id] = bk;
+    }
+    return out;
+  }
+  return { generate, books, LG };
+})();
+if (typeof module !== "undefined") module.exports = KKDemo;
+
+</script>
+<script>
+/* kK app: screens, sources and game flow. */
+(() => {
+const E = KKE;
+const API = "https://statsapi.mlb.com";
+const $ = (s, el) => (el||document).querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+const plural = (n, w, ws) => `${n} ${n === 1 ? w : (ws || w + "s")}`;
+
+// ---------- safe storage ----------
+const mem = {};
+const S = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? (k in mem ? mem[k] : d) : JSON.parse(v); } catch(e){ return k in mem ? mem[k] : d; } },
+  set(k, v){ mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+};
+
+// ---------- settings ----------
+const DEF = { team:144, colors:{ p:"#13274F", s:"#CE1141", t:"#EAAA00" }, level:"base", seat:"mine", view:"tv", print:"", allTwo:false, glove:true, coached:false };
+let settings = Object.assign({}, DEF, S.get("kk-settings", {}));
+function saveSettings(){ S.set("kk-settings", settings); }
+function hex2rgb(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(c=>c+c).join(""); const n=parseInt(h,16); return [n>>16&255,n>>8&255,n&255]; }
+function mix(a, b, t){ const A=hex2rgb(a), B=hex2rgb(b); return "rgb("+A.map((x,i)=>Math.round(x+(B[i]-x)*t)).join(",")+")"; }
+function lum(h){ const [r,g,b]=hex2rgb(h).map(v=>{v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}); return .2126*r+.7152*g+.0722*b; }
+function contrast(a, b){ const L1 = lum(a), L2 = lum(b); return (Math.max(L1,L2) + 0.05) / (Math.min(L1,L2) + 0.05); }
+function toHex(rgb){ const m = rgb.match(/\d+/g); return "#" + m.slice(0,3).map(x => (+x).toString(16).padStart(2,"0")).join(""); }
+function applyTheme(){
+  const {p,s,t} = settings.colors, r = document.documentElement.style;
+  // A light primary cannot carry a dark theme, so the darkest of the three colors becomes the base.
+  const base = lum(p) > 0.35 ? [p,s,t].sort((x,y) => lum(x) - lum(y))[0] : p;
+  const dark = lum(base) > 0.2 ? toHex(mix(base,"#000000",0.6)) : base;
+  const bg = toHex(mix(dark,"#000000",0.55)), panel = toHex(mix(dark,"#000000",0.22));
+  r.setProperty("--bg", bg); r.setProperty("--panel", panel); r.setProperty("--panel2", dark);
+  r.setProperty("--line", mix(dark,"#ffffff",0.24));
+  r.setProperty("--primary", dark);
+  // Only rescue the accent when it nearly vanishes into the panel (for example red on red); scarlet on navy stays scarlet.
+  const acc = contrast(s, panel) < 1.6 ? toHex(mix(s,"#ffffff",0.45)) : s;
+  r.setProperty("--accent", acc);
+  let hi = t;
+  if (contrast(hi, panel) < 4.5) { const toward = toHex(mix(t, acc, 0.35)); hi = contrast(toward, panel) >= 4.5 ? toward : toHex(mix(toward, "#ffffff", 0.5)); }
+  r.setProperty("--hi", hi);
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark;
+}
+
+// ---------- logo ----------
+// The mark: a mirrored k and a K as eyes, and a smile drawn as the trail of a hit baseball.
+// Below 64 px the small cut opens the stem gap and enlarges the ball so both survive.
+const LOGO = { big:{ vb:"-22 9 1243 1093", r:0.8793, inner:'<g transform="translate(-6.5 0)"><g fill="currentColor"><path transform="translate(599 760) scale(-1 -1)" d="M62 0V721H220V323Q249 344 274.5 368.0Q300 392 321.5 418.0Q343 444 360.5 471.5Q378 499 391 528H575Q562 489 539.0 450.5Q516 412 483.0 379.5Q450 347 404.5 324.0Q359 301 302 293V275Q374 289 420.5 275.5Q467 262 495.0 232.0Q523 202 538.0 162.0Q553 122 563 83L584 0H409L399 50Q389 99 375.5 134.0Q362 169 337.0 188.5Q312 208 265 208H220V0Z"/><path transform="translate(520 760) scale(1 -1)" d="M69 0V660H230V371Q279 393 321.0 426.0Q363 459 395.5 498.0Q428 537 449.5 578.5Q471 620 481 660H667Q655 614 628.0 566.5Q601 519 563.0 475.5Q525 432 481.5 398.0Q438 364 393 344V329Q439 329 474.5 319.0Q510 309 537.5 288.0Q565 267 585.5 235.5Q606 204 621 160L678 0H495L458 131Q446 175 426.0 200.5Q406 226 373.0 237.5Q340 249 288 249H230V0Z"/></g><path d="M166.6 884.9 L180.1 894.4 L193.7 903.7 L207.2 912.8 L220.8 921.7 L234.4 930.3 L248.1 938.7 L261.8 946.9 L275.5 954.8 L289.3 962.5 L303.1 969.9 L317.0 977.1 L331.0 984.0 L345.0 990.6 L359.1 997.1 L373.3 1003.2 L387.5 1009.1 L401.8 1014.8 L416.2 1020.1 L430.6 1025.3 L445.1 1030.1 L459.7 1034.7 L474.3 1039.1 L489.1 1043.2 L503.9 1047.0 L518.7 1050.5 L533.7 1053.8 L548.7 1056.8 L563.8 1059.5 L579.0 1062.0 L594.3 1064.1 L609.7 1066.1 L625.1 1067.7 L640.6 1069.0 L656.2 1070.1 L671.8 1070.9 L687.6 1071.4 L703.4 1071.6 L719.3 1071.6 L735.3 1071.2 L751.3 1070.6 L767.4 1069.7 L783.6 1068.5 L799.9 1067.0 L816.2 1065.2 L832.6 1063.2 L849.1 1060.8 L865.7 1058.2 L882.3 1055.3 L899.0 1052.0 L915.8 1048.5 L932.6 1044.7 L949.5 1040.6 L966.4 1036.2 L983.4 1031.6 L1000.5 1026.6 L1017.7 1021.3 L1034.9 1015.8 L1052.1 1009.9 L1069.4 1003.8 L1086.8 997.4 L1033.3 881.1 L1018.6 889.2 L1003.8 897.0 L989.1 904.6 L974.4 911.9 L959.8 918.9 L945.1 925.6 L930.5 932.1 L915.9 938.4 L901.4 944.3 L886.8 950.0 L872.2 955.4 L857.7 960.6 L843.2 965.5 L828.7 970.1 L814.2 974.4 L799.8 978.5 L785.3 982.3 L770.9 985.8 L756.4 989.1 L742.0 992.1 L727.6 994.8 L713.2 997.2 L698.8 999.4 L684.4 1001.3 L670.0 1002.9 L655.6 1004.2 L641.2 1005.3 L626.9 1006.1 L612.5 1006.6 L598.1 1006.8 L583.8 1006.7 L569.4 1006.3 L555.1 1005.7 L540.7 1004.8 L526.4 1003.5 L512.1 1002.0 L497.7 1000.2 L483.4 998.1 L469.1 995.8 L454.8 993.1 L440.5 990.1 L426.3 986.8 L412.0 983.2 L397.8 979.3 L383.5 975.2 L369.3 970.7 L355.1 965.9 L340.9 960.8 L326.8 955.4 L312.6 949.7 L298.5 943.7 L284.5 937.3 L270.4 930.7 L256.4 923.7 L242.4 916.4 L228.5 908.8 L214.6 900.9 L200.8 892.7 L187.1 884.1 L173.4 875.1Z" fill="var(--accent)"/><g transform="translate(1090.0 925.0) rotate(63.9)"><circle r="100" fill="#FFFFFF"/><path d="M -62.0 -78.0 Q -18.0 0 -62.0 78.0" fill="none" stroke="var(--accent)" stroke-width="13.0" stroke-linecap="round"/><path d="M 62.0 -78.0 Q 18.0 0 62.0 78.0" fill="none" stroke="var(--accent)" stroke-width="13.0" stroke-linecap="round"/></g></g>' }, small:{ vb:"-30 9 1261 1096", r:0.8692, inner:'<g transform="translate(-15.5 0)"><g fill="currentColor"><path transform="translate(599 760) scale(-1 -1)" d="M62 0V721H220V323Q249 344 274.5 368.0Q300 392 321.5 418.0Q343 444 360.5 471.5Q378 499 391 528H575Q562 489 539.0 450.5Q516 412 483.0 379.5Q450 347 404.5 324.0Q359 301 302 293V275Q374 289 420.5 275.5Q467 262 495.0 232.0Q523 202 538.0 162.0Q553 122 563 83L584 0H409L399 50Q389 99 375.5 134.0Q362 169 337.0 188.5Q312 208 265 208H220V0Z"/><path transform="translate(538 760) scale(1 -1)" d="M69 0V660H230V371Q279 393 321.0 426.0Q363 459 395.5 498.0Q428 537 449.5 578.5Q471 620 481 660H667Q655 614 628.0 566.5Q601 519 563.0 475.5Q525 432 481.5 398.0Q438 364 393 344V329Q439 329 474.5 319.0Q510 309 537.5 288.0Q565 267 585.5 235.5Q606 204 621 160L678 0H495L458 131Q446 175 426.0 200.5Q406 226 373.0 237.5Q340 249 288 249H230V0Z"/></g><path d="M166.6 884.9 L180.1 894.4 L193.6 903.8 L207.2 912.9 L220.7 921.9 L234.3 930.5 L247.9 939.0 L261.6 947.2 L275.3 955.2 L289.1 963.0 L302.9 970.4 L316.8 977.7 L330.7 984.7 L344.7 991.5 L358.8 998.0 L372.9 1004.2 L387.1 1010.2 L401.4 1016.0 L415.8 1021.5 L430.2 1026.7 L444.7 1031.7 L459.3 1036.4 L473.9 1040.8 L488.7 1045.0 L503.5 1048.9 L518.4 1052.6 L533.4 1056.0 L548.4 1059.1 L563.6 1062.0 L578.8 1064.6 L594.1 1066.9 L609.5 1068.9 L625.0 1070.7 L640.6 1072.1 L656.2 1073.3 L671.9 1074.3 L687.7 1074.9 L703.6 1075.3 L719.6 1075.3 L735.7 1075.1 L751.8 1074.6 L768.0 1073.8 L784.3 1072.8 L800.7 1071.4 L817.1 1069.7 L833.6 1067.8 L850.2 1065.6 L866.9 1063.1 L883.6 1060.2 L900.4 1057.1 L917.3 1053.7 L934.2 1050.1 L951.3 1046.1 L968.3 1041.8 L985.5 1037.2 L1002.7 1032.4 L1020.0 1027.2 L1037.3 1021.8 L1054.7 1016.0 L1072.2 1010.0 L1089.7 1003.7 L1030.4 874.8 L1015.8 883.0 L1001.2 890.9 L986.7 898.6 L972.1 906.0 L957.6 913.1 L943.1 920.0 L928.6 926.6 L914.1 932.9 L899.7 939.0 L885.3 944.8 L870.8 950.3 L856.4 955.6 L842.0 960.6 L827.6 965.3 L813.3 969.8 L798.9 974.0 L784.6 977.9 L770.2 981.6 L755.9 985.0 L741.5 988.1 L727.2 990.9 L712.9 993.5 L698.5 995.8 L684.2 997.8 L669.9 999.5 L655.6 1001.0 L641.3 1002.2 L626.9 1003.1 L612.6 1003.7 L598.3 1004.0 L584.0 1004.1 L569.7 1003.9 L555.4 1003.3 L541.1 1002.5 L526.7 1001.4 L512.4 1000.0 L498.1 998.4 L483.8 996.4 L469.5 994.1 L455.2 991.5 L440.9 988.7 L426.7 985.5 L412.4 982.0 L398.1 978.2 L383.9 974.2 L369.7 969.8 L355.4 965.1 L341.2 960.1 L327.1 954.7 L312.9 949.1 L298.8 943.2 L284.7 936.9 L270.6 930.3 L256.6 923.4 L242.6 916.2 L228.6 908.7 L214.7 900.8 L200.9 892.6 L187.1 884.0 L173.4 875.1Z" fill="var(--accent)"/><g transform="translate(1090.0 925.0) rotate(63.9)"><circle r="112" fill="#FFFFFF"/><path d="M -69.4 -87.4 Q -20.2 0 -69.4 87.4" fill="none" stroke="var(--accent)" stroke-width="19.0" stroke-linecap="round"/><path d="M 69.4 -87.4 Q 20.2 0 69.4 87.4" fill="none" stroke="var(--accent)" stroke-width="19.0" stroke-linecap="round"/></g></g>' } };
+function logo(size){
+  const L = size <= 64 ? LOGO.small : LOGO.big;
+  return `<svg class="logo" width="${size}" height="${Math.round(size*L.r)}" viewBox="${L.vb}" role="img" aria-label="kK">${L.inner}</svg>`;
+}
+
+// ---------- fetch helpers ----------
+async function j(path){ const r = await fetch(API + path, { cache:"no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }
+async function pool(items, n, fn){
+  let i = 0;
+  await Promise.all(Array.from({length:n}, async () => { while (i < items.length) { const k = i++; try { await fn(items[k]); } catch(e){} } }));
+}
+
+// ---------- app state ----------
+const GENERIC = E.genericBook();
+const A = { src:null, feed:null, books:{}, bookStatus:{}, standings:null, ops:{}, era:{}, wp:null, rec:null, skipped:{}, autoPaused:null,
+  tab:"game", sheet:null, draft:null, chip:null, flash:null, lastSig:"", syncTaps:[], toast:null, seg:"read", lastWin:null, bookQueue:[], building:0 };
+const gameKey = () => "kk-game-" + (A.feed && A.feed.gamePk);
+function freshRec(){ return { calls:[], keys:[], keysLocked:false, halves:[], five:null, openAB:null, offset:null, swings:[], pregame:null, final:null }; }
+function loadRec(){ A.rec = Object.assign(freshRec(), S.get(gameKey(), {})); }
+function saveRec(){ S.set(gameKey(), A.rec); }
+
+// ---------- wake lock ----------
+let wakeLock = null;
+async function keepAwake(){ try { if (navigator.wakeLock && document.visibilityState === "visible" && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch(e){} }
+document.addEventListener("visibilitychange", () => { if (A.feed && document.visibilityState === "visible") keepAwake(); });
+
+// ---------- sources ----------
+function virtualClock(firstMs){
+  return { base: firstMs, wall: null, speed: 6, paused: true,
+    now(){ return this.paused || this.wall == null ? this.base : this.base + (Date.now() - this.wall) * this.speed; },
+    play(){ if (this.paused) { this.wall = Date.now(); this.paused = false; } keepAwake(); },
+    pause(){ this.base = this.now(); this.paused = true; },
+    setSpeed(s){ this.base = this.now(); this.wall = Date.now(); this.speed = s; },
+    jump(ms){ this.base = ms; this.wall = Date.now(); } };
+}
+function firstPitchMs(feed){
+  for (const p of feed.liveData.plays.allPlays) for (const e of p.playEvents||[]) if (e.isPitch) return Date.parse(e.startTime);
+  return Date.parse(feed.gameData.datetime.dateTime);
+}
+function readSeasonStats(feed){
+  const bx = feed.liveData.boxscore.teams;
+  for (const side of ["away","home"]) for (const k in bx[side].players) {
+    const pl = bx[side].players[k], ss = pl.seasonStats || {};
+    if (ss.batting && ss.batting.ops && !A.ops[pl.person.id]) A.ops[pl.person.id] = +ss.batting.ops;
+    if (ss.pitching && ss.pitching.era && !A.era[pl.person.id]) A.era[pl.person.id] = { era:+ss.pitching.era, ip:+ss.pitching.inningsPitched || 30 };
+  }
+}
+async function startDemo(){
+  const feed = KKDemo.generate(Math.floor(Math.random()*1e6) + 1);
+  feed.gamePk = "demo-" + Date.now().toString(36);
+  A.feed = feed; A.src = { kind:"demo", clock: virtualClock(firstPitchMs(feed) - 45000) };
+  A.books = KKDemo.books(); for (const id in A.books) A.bookStatus[id] = "ready";
+  A.standings = feed.standings; readSeasonStats(feed); A.wp = null;
+  A.rec = freshRec(); afterLoad();
+}
+async function startReplay(pk){
+  toast("Loading the game and building each pitcher's book. The first load takes about a minute.");
+  const feed = await j(`/api/v1.1/game/${pk}/feed/live`);
+  feed.gamePk = pk;
+  A.feed = feed; A.src = { kind:"replay", clock: virtualClock(firstPitchMs(feed) - 45000) };
+  try { A.wp = await j(`/api/v1/game/${pk}/winProbability`); } catch(e){ A.wp = null; }
+  loadRec(); await loadContext(); afterLoad();
+}
+async function startLive(pk){
+  const feed = await j(`/api/v1.1/game/${pk}/feed/live`);
+  feed.gamePk = pk;
+  A.feed = feed; A.src = { kind:"live" };
+  loadRec();
+  A.src.clock = { paused:false, now(){ return Date.now() - (A.rec.offset != null ? A.rec.offset : 45000); } };
+  await loadContext(); afterLoad(); keepAwake(); pollLive();
+}
+async function pollLive(){
+  if (!A.src || A.src.kind !== "live") return;
+  try { const f = await j(`/api/v1.1/game/${A.feed.gamePk}/feed/live`); f.gamePk = A.feed.gamePk; A.feed = f; A.feedErr = null; A.feedAt = Date.now(); queueBooks(); trySolveSync(); tryVerify(); }
+  catch(e){ A.feedErr = "The MLB feed did not answer, so kK is retrying."; }
+  if (!A.wpAt || Date.now() - A.wpAt > 40000) { try { A.wp = await j(`/api/v1/game/${A.feed.gamePk}/winProbability`); A.wpAt = Date.now(); } catch(e){} }
+  setTimeout(pollLive, 6000);
+}
+async function loadContext(){
+  const feed = A.feed, season = seasonOf();
+  try {
+    const st = await j(`/api/v1/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason`);
+    let rs=0, gp=0; const teams = {};
+    for (const rec of st.records) for (const tr of rec.teamRecords) { teams[tr.team.id] = { rs: tr.runsScored/tr.gamesPlayed, ra: tr.runsAllowed/tr.gamesPlayed }; rs += tr.runsScored; gp += tr.gamesPlayed; }
+    A.standings = { lg: rs/gp || 4.4, teams };
+  } catch(e){ A.standings = { lg:4.4, teams:{} }; }
+  const bx = feed.liveData.boxscore.teams, ids = [];
+  for (const side of ["away","home"]) ids.push(...(bx[side].battingOrder||[]), ...(bx[side].pitchers||[]), ...(bx[side].bullpen||[]));
+  const pp = feed.gameData.probablePitchers || {};
+  for (const side of ["away","home"]) if (pp[side]) ids.push(pp[side].id);
+  if (ids.length) {
+    try {
+      const ppl = await j(`/api/v1/people?personIds=${[...new Set(ids)].join(",")}&hydrate=stats(group=[hitting,pitching],type=[season],season=${season})`);
+      for (const p of ppl.people||[]) for (const g of p.stats||[]) {
+        const s = g.splits && g.splits[0] && g.splits[0].stat; if (!s) continue;
+        if (g.group.displayName === "hitting" && s.ops && s.plateAppearances > 30) A.ops[p.id] = +s.ops;
+        if (g.group.displayName === "pitching" && s.era && s.inningsPitched) A.era[p.id] = { era:+s.era, ip:+s.inningsPitched };
+      }
+    } catch(e){}
+  }
+  readSeasonStats(feed);
+  try {
+    const r = await fetch("books.json", { cache:"no-store" });
+    if (r.ok) { const pb = await r.json(), gd = (feed.gameData.datetime.dateTime||"").slice(0,10);
+      const age = (Date.parse(gd) - Date.parse(pb.built)) / 864e5;
+      if (pb && pb.pitchers && pb.built && age >= 0 && age <= 2) { A.booksBuilt = pb.built; for (const id in pb.pitchers) if (pb.pitchers[id].n) { A.books[id] = pb.pitchers[id]; A.bookStatus[id] = "ready"; } } }
+  } catch(e){}
+  queueBooks();
+}
+function seasonOf(){ return (A.feed.gameData.datetime.dateTime||"2026").slice(0,4); }
+// Build books for both starters first, then every arm in both bullpens, before they are needed.
+function queueBooks(){
+  if (!A.feed || A.src.kind === "demo") return;
+  const order = [], add = id => { if (id && !A.bookStatus[id] && !order.includes(id)) order.push(id); };
+  const pp = A.feed.gameData.probablePitchers || {}, bx = A.feed.liveData.boxscore.teams;
+  for (const side of ["away","home"]) add(pp[side] && pp[side].id);
+  for (const p of A.feed.liveData.plays.allPlays) add(p.matchup.pitcher.id);
+  for (const side of ["away","home"]) for (const id of [...(bx[side].pitchers||[]), ...(bx[side].bullpen||[])]) add(id);
+  for (const id of order) { A.bookStatus[id] = "queued"; A.bookQueue.push(id); }
+  pumpBooks();
+}
+function pumpBooks(){
+  while (A.building < 2 && A.bookQueue.length) { const id = A.bookQueue.shift(); A.building++; buildBook(id).finally(() => { A.building--; pumpBooks(); }); }
+}
+// Pitchers on one staff share games, so each game's play-by-play is fetched once.
+const PBP = new Map();
+function pbpOnce(pk){ if (!PBP.has(pk)) PBP.set(pk, j(`/api/v1/game/${pk}/playByPlay`).catch(e => { PBP.delete(pk); throw e; })); return PBP.get(pk); }
+async function buildBook(pid){
+  const season = seasonOf(), before = (A.feed.gameData.datetime.dateTime||"").slice(0,10);
+  const ck = `kk-book2-${pid}-${season}-${before}`;
+  const cached = S.get(ck, null);
+  if (cached) { A.books[pid] = cached; A.bookStatus[pid] = "ready"; render(true); return; }
+  A.bookStatus[pid] = "building";
+  try {
+    const gl = await j(`/api/v1/people/${pid}/stats?stats=gameLog&group=pitching&season=${season}`);
+    const splits = ((gl.stats && gl.stats[0] && gl.stats[0].splits) || []).filter(s => s.date < before && s.game && s.game.gamePk !== A.feed.gamePk);
+    const starter = splits.filter(s => s.stat && s.stat.gamesStarted).length > splits.length / 2;
+    const pks = splits.slice(starter ? -22 : -25).map(s => s.game.gamePk);
+    const pl = A.feed.gameData.players["ID"+pid];
+    const book = E.newBook(pid, pl ? pl.fullName : String(pid));
+    await pool(pks, 4, async pk => {
+      const pbp = await pbpOnce(pk);
+      for (const p of pbp.allPlays||[]) {
+        if (p.matchup.pitcher.id !== pid) continue;
+        const hand = p.matchup.batSide.code; let first = true;
+        for (const ps of E.pitchStates(p)) {
+          const e = ps.e; if (!e.details.type) continue;
+          if (first) { book.fps.n++; if (e.details.isStrike || e.details.isInPlay) book.fps.s++; first = false; }
+          E.bookAdd(book, hand, E.bucket(ps.balls, ps.strikes), e.details.type.code, E.spotOf(e.pitchData, hand), e.pitchData && e.pitchData.startSpeed);
+        }
+      }
+      book.games++;
+    });
+    A.books[pid] = book; A.bookStatus[pid] = book.n ? "ready" : "empty";
+    if (book.n) S.set(ck, book);
+  } catch(e){ A.bookStatus[pid] = "error"; }
+  render(true);
+}
+
+// ---------- derived game facts ----------
+const now = () => A.src.clock.now();
+function sides(){ const g = A.feed.gameData.teams, my = g.home.id === settings.team ? "home" : "away"; return { my, opp: my === "home" ? "away" : "home", away:g.away, home:g.home }; }
+function abbr(side){ const t = A.feed.gameData.teams[side]; return t.abbreviation || t.teamName || t.name; }
+function teamWord(side){ const t = A.feed.gameData.teams[side]; return t.teamName || t.name; }
+function pl(id){ return A.feed.gameData.players["ID"+id] || { fullName:String(id), lastName:String(id), pitchHand:{code:"R"} }; }
+const last = id => E.nm(id, A.feed);
+function starters(){
+  const pp = A.feed.gameData.probablePitchers || {}, out = {};
+  for (const side of ["away","home"]) {
+    const fielding = side === "away" ? "bottom" : "top";
+    const firstP = A.feed.liveData.plays.allPlays.find(p => p.about.halfInning === fielding);
+    out[side] = firstP ? firstP.matchup.pitcher.id : (pp[side] && pp[side].id);
+  }
+  return out;
+}
+function lastPitcher(plays, side){
+  const half = side === "home" ? "top" : "bottom";
+  for (let i = plays.length-1; i >= 0; i--) if (plays[i].src.about.halfInning === half) return plays[i].src.matchup.pitcher.id;
+  return starters()[side];
+}
+function isOver(plays){
+  const all = A.feed.liveData.plays.allPlays;
+  if (!plays.length || plays.length < all.length || !plays[plays.length-1].complete) return false;
+  if (A.src.kind === "live") return A.feed.gameData.status.abstractGameState === "Final";
+  return true;
+}
+// The book for a pitcher: his season book, else what he has thrown today, else a league stand-in.
+function bookFor(pid, plays){
+  if (A.books[pid]) return A.books[pid];
+  const tb = E.newBook(pid, "today");
+  for (const v of plays || []) if (v.src.matchup.pitcher.id === pid) for (const ps of E.pitchStates(v.src)) {
+    if (!v.pitches.includes(ps.e) || !ps.e.details.type) continue;
+    E.bookAdd(tb, v.src.matchup.batSide.code, E.bucket(ps.balls, ps.strikes), ps.e.details.type.code, E.spotOf(ps.e.pitchData, v.src.matchup.batSide.code));
+  }
+  if (tb.n >= 25) { tb.today = true; return tb; }
+  return GENERIC;
+}
+
+// ---------- engines ----------
+const LG_OPS = 0.715;
+function offenseFactors(side){
+  const bx = A.feed.liveData.boxscore.teams[side], T = A.standings.teams[A.feed.gameData.teams[side].id];
+  const teamF = T ? T.rs / A.standings.lg : 1, edge = side === "home" ? 1.03 : 0.97;
+  const order = bx.battingOrder && bx.battingOrder.length === 9 ? bx.battingOrder : null;
+  if (!order) return Array(9).fill(teamF * edge);
+  return order.map(id => (A.ops[id] ? Math.pow(A.ops[id]/LG_OPS, 1.8) : teamF) * edge);
+}
+function pitcherFactor(id, side){
+  const T = A.standings.teams[A.feed.gameData.teams[side].id], teamRA = T ? T.ra / A.standings.lg : 1, e = A.era[id];
+  if (!e) return teamRA;
+  const w = e.ip / (e.ip + 80);
+  return w * (e.era * 1.08 / A.standings.lg) + (1 - w) * teamRA;
+}
+function penFactor(side){
+  const T = A.standings.teams[A.feed.gameData.teams[side].id], bx = A.feed.liveData.boxscore.teams[side], st = starters()[side];
+  const ids = [...new Set([...(bx.bullpen||[]), ...(bx.pitchers||[])])].filter(id => id !== st && A.era[id]);
+  if (ids.length >= 3) { const w = ids.reduce((a, id) => a + A.era[id].ip, 0); return ids.reduce((a, id) => a + pitcherFactor(id, side) * A.era[id].ip, 0) / w; }
+  return T ? 0.97 * T.ra / A.standings.lg : 1;
+}
+function pitchCount(plays, id){ let n = 0; for (const v of plays) if (v.src.matchup.pitcher.id === id) n += v.pitches.length; return n; }
+function nextSlot(plays, side){ const half = side === "away" ? "top" : "bottom"; return plays.filter(v => v.complete && v.src.about.halfInning === half).length % 9; }
+function mcTeams(plays, generic){
+  const st = starters(), teams = {};
+  for (const side of ["away","home"]) {
+    const pid = lastPitcher(plays, side), isStarter = pid === st[side], pc = pitchCount(plays, pid);
+    teams[side] = { idx: nextSlot(plays, side),
+      offense: generic ? Array(9).fill(side === "home" ? 1.03 : 0.97) : offenseFactors(side),
+      pitching: { current: generic ? 1 : pitcherFactor(pid, side), pen: generic ? 1 : penFactor(side), remaining: isStarter ? Math.max(0, Math.round((100 - pc) / 3.9)) : 3 } };
+  }
+  return teams;
+}
+function nextState(half, score){
+  return half ? { inning: half.top ? half.inning : half.inning + 1, top: !half.top, outs:0, bases:0, away:score.away, home:score.home }
+              : { inning:1, top:true, outs:0, bases:0, away:0, home:0 };
+}
+const ghost = () => (A.feed.gameData.game && A.feed.gameData.game.type) === "R";
+function pythAway(){
+  const sd = sides(), stp = starters();
+  if (settings.print !== "" && !isNaN(+settings.print) && +settings.print > 0 && +settings.print < 100) { const v = (+settings.print)/100; return sd.my === "away" ? v : 1 - v; }
+  const lg = A.standings.lg, T = id => A.standings.teams[id] || { rs:lg, ra:lg };
+  const era = id => A.era[id] ? E.regressERA(A.era[id].era, A.era[id].ip, lg) : null;
+  return E.pythPregame({ lg, away:Object.assign({}, T(sd.away.id), { starterERA: era(stp.away) }), home:Object.assign({}, T(sd.home.id), { starterERA: era(stp.home) }) }).pAway;
+}
+function mlbAwayAt(abIdx){
+  if (!A.wp || !A.wp.length) return null;
+  const el = A.wp.find(w => w.about && w.about.atBatIndex === abIdx && w.homeTeamWinProbability != null);
+  return el ? 1 - el.homeTeamWinProbability / 100 : null;
+}
+function mlbAway0(){ if (!A.wp || !A.wp.length) return null; const w = A.wp[0]; return 1 - (w.homeTeamWinProbability - (w.homeTeamWinProbabilityAdded||0)) / 100; }
+function runEngines(plays, half, score, final){
+  const sd = sides(), toMy = x => x == null ? null : (sd.my === "away" ? x : 1 - x);
+  if (final || (half && half.inning >= 9 && ((half.top && score.home > score.away) || (!half.top && score.home !== score.away)))) {
+    const m = toMy(score.away > score.home ? 1 : 0); return { mc:m, mlb:m, cons:m, done:true };
+  }
+  const st = Object.assign(nextState(half, score), { ghost: ghost() });
+  const upto = half ? plays.slice(0, half.playIndex + 1) : [];
+  const mcA = E.simulate(st, mcTeams(upto, false), 5000, 1000 + (half ? half.atBatIndex : 0));
+  const pA = pythAway();
+  let mlbRaw = half ? mlbAwayAt(half.atBatIndex) : mlbAway0(), mlb0 = mlbAway0(), standIn = false;
+  if (mlbRaw == null && A.src.kind === "demo") {
+    standIn = true;
+    mlbRaw = E.simulate(st, mcTeams(upto, true), 3000, 2000 + (half ? half.atBatIndex : 0));
+    mlb0 = A.demoMlb0 != null ? A.demoMlb0 : (A.demoMlb0 = E.simulate(nextState(null), mcTeams([], true), 3000, 2000));
+  }
+  const outs = half ? (half.inning - 1) * 6 + (half.top ? 3 : 6) : 0;
+  const mlbA = mlbRaw == null ? null : E.shiftWP(mlbRaw, mlb0 == null ? 0.47 : mlb0, pA, outs);
+  const mc = toMy(mcA), mlb = toMy(mlbA);
+  return { mc, mlb, cons: mlb == null ? mc : (mc + mlb) / 2, standIn, pending: mlb == null };
+}
+function abSwings(plays){
+  const sd = sides();
+  if (A.wp && A.wp.length) {
+    const out = [];
+    for (const w of A.wp) {
+      if (w.homeTeamWinProbabilityAdded == null) continue;
+      const v = plays.find(x => x.src.about.atBatIndex === w.about.atBatIndex && x.complete); if (!v) continue;
+      out.push({ ab: w.about.atBatIndex, d: (sd.my === "home" ? 1 : -1) * w.homeTeamWinProbabilityAdded, v });
+    }
+    return out;
+  }
+  return A.rec.swings.map(s => ({ ab:s.ab, d:s.d, v: plays.find(x => x.src.about.atBatIndex === s.ab) })).filter(s => s.v);
+}
+function demoSwingsForHalf(plays, half, final){
+  const sd = sides(), idxs = [];
+  for (let i = 0; i <= half.playIndex; i++) { const s = plays[i].src.about; if (s.inning === half.inning && (s.halfInning === "top") === half.top) idxs.push(i); }
+  const teamsAt = i => mcTeams(plays.slice(0, i), true);
+  const stateAfter = i => {
+    const v = plays[i], lc = E.lastCount(v.evs), outs = lc ? lc.outs : 0, p = v.src;
+    if (outs >= 3) return nextState({ inning:p.about.inning, top:p.about.halfInning==="top" }, { away:p.result.awayScore, home:p.result.homeScore });
+    return { inning:p.about.inning, top:p.about.halfInning==="top", outs, bases:E.basesAfter(p), away:p.result.awayScore, home:p.result.homeScore };
+  };
+  let prev = null;
+  for (const i of idxs) {
+    const p = plays[i].src;
+    const before = prev != null ? prev : E.simulate(Object.assign(i === 0 ? nextState(null) : stateAfter(i-1), { ghost:ghost() }), teamsAt(i), 1200, 3000+i);
+    const s1 = Object.assign(stateAfter(i), { ghost:ghost() });
+    const ended = (final && i === plays.length - 1) || (i === half.playIndex && s1.inning >= 9 && ((half.top && s1.home > s1.away) || (!half.top && s1.home !== s1.away)));
+    const after = ended ? (p.result.awayScore > p.result.homeScore ? 1 : 0) : E.simulate(s1, teamsAt(i+1), 1200, 3000+i+1);
+    A.rec.swings.push({ ab: p.about.atBatIndex, d: (sd.my === "away" ? 1 : -1) * (after - before) * 100 });
+    prev = after;
+  }
+}
+
+// ---------- call windows ----------
+// Windows open on two-strike pitches, with runners in scoring position from the sixth on, and in big spots late.
+// By default the fan gets at most two windows per at-bat unless they open the whole at-bat.
+function eligibleReasons(b, s, ctx){
+  const r = [];
+  if (s === 2) r.push("Two strikes");
+  if (ctx.inning >= 6 && (ctx.bases & 6)) r.push("Runner in scoring position");
+  if (ctx.big) r.push("Big spot");
+  return r;
+}
+function windowInfo(plays, st){
+  if (!st.cur || st.cur.complete) return null;
+  const p = st.cur.src, sd = sides(), ab = p.about.atBatIndex;
+  const def = p.about.halfInning === "top" ? "home" : "away";
+  if (settings.seat === "mine" && def !== sd.my) return { seatOff:true, ab };
+  if (A.src.kind === "live" && (A.rec.offset == null || !A.rec.verified)) return { needSync:true, ab };
+  const runners = [1,2,4].filter(b => st.bases & b).length;
+  const batScore = p.about.halfInning === "top" ? st.away : st.home, fieldScore = p.about.halfInning === "top" ? st.home : st.away, d = fieldScore - batScore;
+  const ctx = { inning: p.about.inning, bases: st.bases, big: p.about.inning >= 7 && d >= 0 && d <= 2 && runners >= Math.max(1, d) };
+  const seen = E.pitchStates(p).filter(ps => st.cur.pitches.includes(ps.e));
+  // Two-strike pitches keep their own two windows, so an early window late in the game never uses them up.
+  const earlyOpened = seen.filter(ps => ps.strikes < 2 && eligibleReasons(ps.balls, ps.strikes, ctx).length).length;
+  const twoOpened = seen.filter(ps => ps.strikes === 2).length;
+  const reasons = eligibleReasons(st.balls, st.strikes, ctx);
+  const userOpen = A.rec.openAB === ab;
+  const open = userOpen || (st.strikes === 2 ? (settings.allTwo || twoOpened < 2) : (reasons.length > 0 && earlyOpened < 1));
+  return { open, reasons: userOpen ? ["Your at-bat"].concat(reasons) : reasons, ab, pn: st.cur.pitches.length + 1,
+    big: (st.strikes === 2 && (st.bases & 6) > 0) || ctx.big };
+}
+function callContext(st, plays){
+  const p = st.cur.src;
+  return { pitcherId: p.matchup.pitcher.id, hand: p.matchup.batSide.code, bkt: E.bucket(st.balls, st.strikes), batter: p.matchup.batter.id, count:`${st.balls}-${st.strikes}`, inning:p.about.inning, book: bookFor(p.matchup.pitcher.id, plays) };
+}
+function lockCall(){
+  const d = A.draft; if (!d || d.pitch == null || d.spot == null) return;
+  const plays = E.view(A.feed, now()), st = E.stateOf(plays), w = windowInfo(plays, st);
+  if (!w || !w.open || w.ab !== d.ab || w.pn !== d.pn) return;
+  const c = callContext(st, plays), level = settings.level;
+  const call = { ab:w.ab, pn:w.pn, pitch:d.pitch, spot:d.spot, lockT: now(), level, hand:c.hand, bkt:c.bkt, big:w.big, pitcherId:c.pitcherId, batter:c.batter, count:c.count, inning:c.inning, bookKind: c.book.generic ? "league" : c.book.today ? "today" : "season" };
+  call.bookCall = E.bookCall(c.book, c.hand, c.bkt, level);
+  call.w = E.weights(c.book, c.hand, c.bkt, level, call);
+  call.bw = E.weights(c.book, c.hand, c.bkt, level, call.bookCall);
+  call.against = call.pitch !== call.bookCall.pitch;
+  if (A.chip) { const gc = A.rec.calls.find(x => x.ab === A.chip.ab && x.pn === A.chip.pn); if (gc && !gc.glove) gc.glove = { answer:"timeout" }; A.chip = null; }
+  const mix0 = E.mixLine(c.book, c.hand, c.bkt, level).pitch.find(x => x.k === call.bookCall.pitch); call.bookPct = mix0 ? mix0.pct : null;
+  A.rec.calls = A.rec.calls.filter(x => !(x.ab === call.ab && x.pn === call.pn));
+  A.rec.calls.push(call); saveRec();
+  A.justLocked = call.ab + "-" + call.pn;
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
+  if (A.autoPaused && A.src.kind !== "live") { A.autoPaused = null; A.src.clock.play(); }
+  render(true);
+}
+function findPitch(ab, pn){
+  const p = A.feed.liveData.plays.allPlays.find(x => x.about.atBatIndex === ab); if (!p) return null;
+  return (p.playEvents||[]).filter(e => e.isPitch)[pn-1] || null;
+}
+function actualOf(e, hand){ return { type: e.details.type && e.details.type.code, spot: E.spotOf(e.pitchData, hand), speed: e.pitchData && e.pitchData.startSpeed, t: Date.parse(e.startTime) }; }
+function gradeOne(c){
+  const e = findPitch(c.ab, c.pn);
+  if (!e || !e.details.type || E.fam(e.details.type.code) == null) { c.void = "there was no tracked pitch to grade"; return false; }
+  const a = actualOf(e, c.hand);
+  if (!(c.lockT < a.t)) { c.void = "the call was locked after the pitch"; return false; }
+  delete c.void;
+  c.actual = a; c.g = E.grade(c, a, c.level); c.bg = E.grade({ pitch:c.bookCall.pitch, spot:c.bookCall.spot }, a, c.level);
+  c.pts = E.pointsFor(c.g, c.w, c.big); c.bpts = E.pointsFor(c.bg, c.bw, c.big);
+  return true;
+}
+// Final grades land when the at-bat ends, so a reclassified pitch type is picked up.
+function gradeCalls(plays){
+  for (const c of A.rec.calls) { const v = plays.find(x => x.src.about.atBatIndex === c.ab); if (v && v.complete) gradeOne(c); }
+}
+function summary(calls){
+  const g = calls.filter(c => c.g && !c.void);
+  const ag = g.filter(c => c.against);
+  return { n: g.length, you: g.filter(c=>c.g.pitchRight).length, book: g.filter(c=>c.bg.pitchRight).length,
+    spot: g.filter(c=>c.g.spotCredit===1).length, bspot: g.filter(c=>c.bg.spotCredit===1).length, both: g.filter(c=>c.g.pitchRight && c.g.spotCredit===1).length,
+    against: ag.length, againstYou: ag.filter(c=>c.g.pitchRight).length, againstBook: ag.filter(c=>c.bg.pitchRight).length,
+    pts: g.reduce((a,c)=>a+c.pts,0), bpts: g.reduce((a,c)=>a+c.bpts,0) };
+}
+
+// ---------- glove ----------
+function answerGlove(ans){
+  const c = A.rec.calls.find(x => A.chip && x.ab === A.chip.ab && x.pn === A.chip.pn);
+  if (c) c.glove = { answer: ans };
+  A.chip = null; saveRec(); render(true);
+}
+
+// ---------- half-inning processing ----------
+function processHalves(plays, final){
+  const halves = E.completedHalves(plays, final);
+  let changed = false;
+  if (!A.rec.pregame) { A.rec.pregame = runEngines(plays, null, {away:0,home:0}); changed = true; }
+  for (let i = A.rec.halves.length; i < halves.length; i++) {
+    const h = halves[i], v = plays[h.playIndex];
+    const score = { away: v.src.result.awayScore, home: v.src.result.homeScore };
+    const isLast = final && h.playIndex === plays.length - 1;
+    const r = runEngines(plays, h, score, isLast);
+    if (A.src.kind === "demo") demoSwingsForHalf(plays, h, isLast);
+    A.rec.halves.push(Object.assign({ inning:h.inning, top:h.top, ab:h.atBatIndex, score }, r));
+    changed = true;
+    if (h.inning === 5 && !h.top && !A.rec.five) A.rec.five = gradeKeys(plays, "five");
+  }
+  for (const h of A.rec.halves) if (h.pending && !h.done) {
+    const hv = halves.find(x => x.atBatIndex === h.ab); if (!hv) continue;
+    const r = runEngines(plays, hv, h.score); if (!r.pending) { Object.assign(h, r); changed = true; }
+  }
+  if (changed) saveRec();
+}
+function keyCtx(){
+  const sd = sides(), st = starters(), opp = st[sd.opp], bk = A.books[opp];
+  const fps = bk && bk.fps.n >= 30 ? 100*bk.fps.s/bk.fps.n : 62;
+  return { me: teamWord(sd.my), opp: teamWord(sd.opp), oppStarter: opp ? pl(opp).fullName : `The ${teamWord(sd.opp)} starter`, oppFPS: fps };
+}
+function statsNow(plays){
+  const sd = sides(), order = (A.feed.liveData.boxscore.teams[sd.opp].battingOrder || []).slice(0,3);
+  return E.gameStats(plays, sd.my, starters(), order);
+}
+function inningsDone(plays){ return E.completedHalves(plays).length / 2; }
+function gradeKeys(plays, phase){
+  const cat = E.keyCatalog(keyCtx()), s = statsNow(plays), inn = phase === "five" ? 5 : inningsDone(plays);
+  return A.rec.keys.map(id => { const k = cat.find(x => x.id === id); const g = E.gradeKey(k, s, phase === "five" ? "live" : phase, inn); return { id, text:k.text, status:g.status, show:g.show, hit:g.hit, z:g.z }; });
+}
+function fillKeys(){ const pref = ["pitches","starter","top3","xbh","fps","walks"]; for (const k of pref) if (A.rec.keys.length < 3 && !A.rec.keys.includes(k)) A.rec.keys.push(k); }
+
+// ---------- final ----------
+function finalize(plays){
+  if (A.rec.final) return;
+  gradeCalls(plays);
+  const sd = sides(), lp = plays[plays.length-1].src;
+  const my = sd.my === "away" ? lp.result.awayScore : lp.result.homeScore, op = sd.my === "away" ? lp.result.homeScore : lp.result.awayScore;
+  const won = my > op, keys = gradeKeys(plays, "final");
+  const consistent = keys.filter(k => k.hit === won).sort((a,b) => Math.abs(b.z) - Math.abs(a.z));
+  const ga = E.goAhead(plays);
+  let dec = null;
+  if (ga) { const sw = abSwings(plays).find(s => s.ab === ga.src.about.atBatIndex); dec = { ab: ga.src.about.atBatIndex, text: abText(ga), d: sw ? Math.round(Math.abs(sw.d)) : null }; }
+  A.rec.final = { my, op, won, keys, deciding: consistent[0] ? consistent[0].id : null, decidingAB: dec, line: summary(A.rec.calls) };
+  A.chip = null; A.toast = null;
+  saveRec(); saveSeason(plays);
+}
+function abText(v){
+  const p = v.src, inn = `${p.about.halfInning === "top" ? "top" : "bottom"} of the ${E.ordinal(p.about.inning)}`;
+  const desc = (p.result.description || "").replace(/\s+/g," ").trim().replace(/\.$/,"");
+  return `${desc}, in the ${inn}`;
+}
+function bestRead(calls){
+  const g = calls.filter(c => c.g && !c.void && c.against && c.g.pitchRight).sort((a,b) => ((b.big?1:0) - (a.big?1:0)) || (b.pts - a.pts));
+  const c = g[0]; if (!c) return null;
+  const word = (k, lv) => lv === "advanced" ? E.tn(k) : k === "offspeed" ? "offspeed pitch" : E.FAM_NAME[k].toLowerCase();
+  return `calling ${pl(c.pitcherId).fullName}'s ${word(c.pitch, c.level)} on ${c.count} to ${pl(c.batter).fullName} in the ${E.ordinal(c.inning)}, when the book said ${word(c.bookCall.pitch, c.level)}`;
+}
+function shareText(){
+  const f = A.rec.final, sd = sides(), L = f.line, best = bestRead(A.rec.calls);
+  let t = `kK: ${abbr(sd.my)} ${f.my}, ${abbr(sd.opp)} ${f.op}.`;
+  if (best) t += ` My best read was ${best}.`;
+  if (L.against) t += ` I went against the book ${plural(L.against,"time")} and was right ${plural(L.againstYou,"time")}, and the book was right ${plural(L.againstBook,"time")}.`;
+  else if (L.n) t += ` I called ${plural(L.n,"pitch","pitches")} and got ${L.you} right.`;
+  const g = A.rec.calls.filter(c => c.g && !c.void);
+  const grid = g.map(c => c.against && c.g.pitchRight && !c.bg.pitchRight ? "⭐" : c.g.pitchRight ? "🟩" : "⬜").join("");
+  if (grid) t += "\n" + grid + (grid.includes("⭐") ? "\n⭐ beat the book" : "");
+  if (/^https?:/.test(location.href)) t += "\n" + location.href.split("#")[0];
+  return t;
+}
+function saveSeason(plays){
+  const sea = S.get("kk-season", { games:[], pitchers:{}, glove:{}, keys:{}, reads:[] });
+  sea.reads = sea.reads || [];
+  if (sea.games.some(g => g.pk === A.feed.gamePk)) return;
+  const f = A.rec.final, sd = sides(), demo = A.src.kind === "demo", tag = demo ? " (demo)" : "";
+  sea.games.push({ demo, pk:A.feed.gamePk, date:(A.feed.gameData.datetime.dateTime||"").slice(0,10), opp: abbr(sd.opp), my:f.my, op:f.op, won:f.won, line:f.line, keys:f.keys.map(k=>({id:k.id, hit:k.hit})) });
+  for (const c of A.rec.calls) if (c.g && !c.void) {
+    const pkey = (demo ? "demo-" : "") + c.pitcherId;
+    const P = sea.pitchers[pkey] || (sea.pitchers[pkey] = { demo, name: pl(c.pitcherId).fullName + tag, n:0, you:0, book:0, pts:0, bpts:0, against:0, againstYou:0, againstBook:0 });
+    P.n++; if (c.g.pitchRight) P.you++; if (c.bg.pitchRight) P.book++; P.pts += c.pts; P.bpts += c.bpts;
+    if (c.against) { P.against = (P.against||0) + 1; if (c.g.pitchRight) P.againstYou = (P.againstYou||0) + 1; if (c.bg.pitchRight) P.againstBook = (P.againstBook||0) + 1; }
+    if (c.glove && (c.glove.answer === "yes" || c.glove.answer === "missed")) {
+      const G = sea.glove[pkey] || (sea.glove[pkey] = { demo, name: pl(c.pitcherId).fullName + tag, types:{} });
+      const T = G.types[c.actual.type] || (G.types[c.actual.type] = { n:0, hit:0, miss:0, missHard:0 });
+      T.n++; if (c.glove.answer === "yes") T.hit++; else { T.miss++; const e = findPitch(c.ab, c.pn); if (e && e.hitData && e.hitData.launchSpeed >= 95) T.missHard++; }
+    }
+  }
+  const br = bestRead(A.rec.calls); if (br) sea.reads.push({ demo, date:(A.feed.gameData.datetime.dateTime||"").slice(0,10), text: cap(br) + tag + "." });
+  sea.reads = sea.reads.slice(-30);
+  for (const k of f.keys) {
+    const kid = (demo ? "demo-" : "") + k.id;
+    const K = sea.keys[kid] || (sea.keys[kid] = { demo, text:k.text, hitW:0, hitL:0, missW:0, missL:0 });
+    K.text = k.text + (demo ? " (demo games)" : "");
+    if (k.hit) { f.won ? K.hitW++ : K.hitL++; } else { f.won ? K.missW++ : K.missL++; }
+  }
+  S.set("kk-season", sea);
+}
+
+// ---------- sync ----------
+function feedStarts(){ const s = []; for (const p of A.feed.liveData.plays.allPlays) for (const e of p.playEvents||[]) if (e.isPitch) s.push(Date.parse(e.startTime)); return s; }
+function syncTap(){
+  if (A.src.kind !== "live" || A.syncPending) return;
+  const t = Date.now();
+  if (A.rec.offset != null && !A.syncTaps.length && !A.rec.verified) { A.verifyTap = t; render(true); return; }
+  if (A.rec.offset != null && !A.syncTaps.length) {
+    const starts = feedStarts(), feedT = t - A.rec.offset; let ns = null; for (const x of starts) if (ns == null || Math.abs(x - feedT) < Math.abs(ns - feedT)) ns = x;
+    if (ns != null) { const drift = (t - ns) - A.rec.offset; toast(Math.abs(drift) > 5000 ? `Your TV has drifted ${Math.round(Math.abs(drift)/1000)} seconds from the sync. Tap Re-sync and mark three pitches.` : `Still in sync, within ${plural(Math.max(1,Math.round(Math.abs(drift)/1000)),"second")}.`); }
+    return;
+  }
+  A.syncTaps.push(t);
+  if (A.syncTaps.length >= 3) { A.syncPending = { taps: A.syncTaps.slice(), at: t }; A.syncTaps = []; }
+  render(true);
+}
+// The confirming tap is checked once the feed has that pitch.
+function tryVerify(){
+  const t = A.verifyTap; if (!t || !(A.feedAt > t + 6000) || Date.now() - t < 9000) return;
+  A.verifyTap = null;
+  const feedT = t - A.rec.offset; let ns = null; for (const x of feedStarts()) if (ns == null || Math.abs(x - feedT) < Math.abs(ns - feedT)) ns = x;
+  if (ns != null && Math.abs(feedT - ns) <= 3000) { A.rec.verified = true; saveRec(); toast("Synced and confirmed. Calls are open."); }
+  else { A.rec.offset = null; A.rec.verified = false; saveRec(); toast("That tap did not match the sync, so let's redo it. Tap Pitch on three releases in a row."); }
+}
+// Solve only after the feed has refreshed past the last tap, so the tapped pitches are in it.
+function trySolveSync(){
+  const P = A.syncPending; if (!P || Date.now() - P.at < 13000 || !(A.feedAt > P.at + 6000)) return;
+  A.syncPending = null;
+  const off = E.syncOffset(P.taps, feedStarts().slice(-80));
+  if (off == null) { toast("Those taps did not line up with three pitches in a row. Try again on the next three pitches."); return; }
+  if (off > 60000) { A.confirmOffset = off; render(true); return; }
+  setOffset(off);
+}
+function setOffset(off){
+  A.rec.offset = off; A.rec.verified = false; A.confirmOffset = null; saveRec();
+  toast(off >= 1000 ? `Almost there. Your TV looks ${plural(Math.round(off/1000),"second")} behind the live feed. Tap Pitch on one more release to confirm.` : "Almost there. Tap Pitch on one more release to confirm.");
+}
+
+// ---------- jump (replay and demo) ----------
+function jumpToNextCall(){
+  const c = A.src.clock, t = c.now();
+  for (const p of A.feed.liveData.plays.allPlays) for (const e of (p.playEvents||[])) {
+    if (!e.isPitch) continue; const ts = Date.parse(e.startTime); if (ts <= t + 4000) continue;
+    const pv = E.view(A.feed, ts - 3000), st = E.stateOf(pv), w = windowInfo(pv, st);
+    if (w && w.open && !A.skipped[w.ab + "-" + w.pn] && !A.rec.calls.some(x => x.ab === w.ab && x.pn === w.pn)) { c.jump(ts - 3000); A.autoPaused = null; if (c.paused) c.play(); render(true); return; }
+  }
+  if (c.paused) c.play(); c.setSpeed(80); A.autoPaused = null;
+  toast("There are no more call windows, so kK will play out the rest of the game.");
+}
+function toast(msg){ A.toast = { msg, until: Date.now() + 5000 }; render(true); }
+
+// ---------- render loop ----------
+function render(force){
+  if (!A.feed) return renderStart();
+  if (!A.inAct && Date.now() < (A.holdUntil || 0)) return; // never rebuild the screen under a finger
+  const t = now(), plays = E.view(A.feed, t), st = E.stateOf(plays), over = isOver(plays);
+  if (A.standings) processHalves(plays, over);
+  gradeCalls(plays);
+  // A called pitch the fan has now seen: show the result at once, and ask about the glove.
+  for (const c of A.rec.calls) {
+    if (c.seen) continue;
+    const v = plays.find(x => x.src.about.atBatIndex === c.ab); if (!v || v.pitches.length < c.pn) continue;
+    c.seen = true; const e = v.pitches[c.pn-1];
+    if (c.lockT < Date.parse(e.startTime)) {
+      A.flash = { ab:c.ab, pn:c.pn, until: Date.now() + 20000 };
+      if (settings.glove && !over) A.chip = { ab:c.ab, pn:c.pn, until: Date.now() + 6000 };
+    }
+    saveRec();
+  }
+  const deciding = w0 => w0 && w0.open && !A.rec.calls.some(c => c.ab === w0.ab && c.pn === w0.pn);
+  const wNow = !over ? windowInfo(plays, st) : null;
+  if (A.chip && deciding(wNow)) { A.chip.until = Math.max(A.chip.until, Date.now() + 1500); if (A.flash) A.flash.until = Math.max(A.flash.until, Date.now() + 2000); }
+  if (A.chip && Date.now() > A.chip.until) { const c = A.rec.calls.find(x => x.ab === A.chip.ab && x.pn === A.chip.pn); if (c && !c.glove) { c.glove = { answer:"timeout" }; saveRec(); } A.chip = null; }
+  if (over) finalize(plays);
+  if (plays.some(v => v.pitches.length) && !A.rec.keysLocked) { A.rec.keysLocked = true; fillKeys(); saveRec(); }
+  const w = !over ? windowInfo(plays, st) : null;
+  if (w && w.open) {
+    const key = w.ab + "-" + w.pn, called = A.rec.calls.some(c => c.ab === w.ab && c.pn === w.pn);
+    if (A.lastWin !== key) { A.lastWin = key; A.pulse = Date.now(); A.scrollCall = true;
+ if (navigator.vibrate) try { navigator.vibrate(40); } catch(e){} }
+    if (A.src.kind !== "live" && !called && !A.skipped[key] && !A.src.clock.paused) { A.src.clock.pause(); A.src.clock.base = t; A.autoPaused = key; }
+  } else if (A.autoPaused && A.src.kind !== "live" && !over) { A.autoPaused = null; A.src.clock.play(); }
+  if (A.toast && Date.now() > A.toast.until) A.toast = null;
+  if (A.flash && Date.now() > A.flash.until) A.flash = null;
+  const sig = JSON.stringify([plays.length, plays.length && plays[plays.length-1].evs.length, plays.length && plays[plays.length-1].complete, A.tab, A.sheet, A.draft, A.chip && [A.chip.ab,A.chip.pn], A.flash && [A.flash.ab, A.flash.pn], A.toast && A.toast.msg, A.rec.calls.length, A.rec.calls.filter(c=>c.g).length, A.rec.halves.length, A.rec.offset, A.syncTaps.length, settings, A.bookStatus, A.feedErr, A.src.clock.paused, A.src.clock.speed, A.rec.keys, A.seg, over, A.autoPaused, A.rec.openAB, A.keyMsg, !!A.syncPending, A.confirmOffset, A.rec.verified, !!A.verifyTap]);
+  if (!force && sig === A.lastSig) { tickTimers(); return; }
+  A.lastSig = sig;
+  const y = window.scrollY;
+  $("#app").innerHTML = header(plays, st, over) + `<main>${A.tab==="game" ? gameTab(plays, st, over, w) : A.tab==="pace" ? paceTab(plays, over) : A.tab==="keys" ? keysTab(plays, over) : seasonTab()}</main>` + navBar() + (A.sheet ? sheet() : "") + (A.toast ? `<div class="toast" role="status">${esc(A.toast.msg)}</div>` : "");
+  bind(); tickTimers(); A.justLocked = null;
+  if (A.scrollCall && A.tab === "game" && $(".callcard")) { A.scrollCall = false; const el = $(".callcard"), r = el.getBoundingClientRect(), vh = window.innerHeight - 76; if (r.bottom > vh || r.top < 0) el.scrollIntoView({ block: el.offsetHeight > vh ? "start" : "nearest" }); }
+  else if (!force) window.scrollTo(0, y);
+}
+function tickTimers(){ const el = $("#chipbar"); if (el && A.chip) el.style.width = Math.max(0, (A.chip.until - Date.now()) / 60) + "%"; }
+
+// ---------- header ----------
+function inningLabel(st, plays, over){
+  if (over) return "Final";
+  if (!plays.some(v => v.evs.length)) return "Pregame";
+  const halves = E.completedHalves(plays), lastHalf = halves[halves.length-1];
+  if (st.cur && st.cur.complete && lastHalf && lastHalf.playIndex === plays.length-1) return `${lastHalf.top ? "Middle" : "End"} of the ${E.ordinal(lastHalf.inning)}`;
+  return `${st.top ? "Top" : "Bottom"} ${E.ordinal(st.inning)}, ${plural(st.outs,"out")}`;
+}
+function paceNow(){ const h = A.rec.halves.length ? A.rec.halves[A.rec.halves.length-1] : null, line = A.rec.pregame ? A.rec.pregame.cons : null; return { h, line, cur: h ? h.cons : line }; }
+function header(plays, st, over){
+  const sd = sides(), pc = paceNow();
+  const myScore = sd.my === "away" ? st.away : st.home, opScore = sd.my === "away" ? st.home : st.away;
+  const delta = pc.cur != null && pc.line != null ? Math.round((pc.cur - pc.line)*100) : null;
+  const mode = A.src.kind === "demo" ? "Demo game (simulated)" : A.src.kind === "replay" ? "Replay" : (A.rec.offset == null || !A.rec.verified ? "Live, not synced yet" : A.rec.offset >= 0 ? `Live, ${Math.round(A.rec.offset/1000)} seconds behind` : "Live, synced");
+  const paceText = A.rec.final ? `Final: the ${teamWord(sd.my)} ${A.rec.final.won ? "won" : "lost"}` : pc.cur == null ? "" : pc.h ? `${teamWord(sd.my)} ${Math.round(pc.cur*100)}%, ${Math.abs(delta)} ${delta>=0?"above":"below"} pregame` : `${teamWord(sd.my)} ${Math.round(pc.cur*100)}% to win`;
+  return `<header>
+    <div class="hrow"><button class="brand" data-act="tab" data-tab="game" aria-label="Game">${logo(48)}</button>
+      <div class="score" aria-label="${esc(abbr(sd.my))} ${myScore}, ${esc(abbr(sd.opp))} ${opScore}"><div class="sc"><span class="ab">${esc(abbr(sd.my))}</span><b>${myScore}</b></div><span class="sep" aria-hidden="true"></span><div class="sc"><span class="ab">${esc(abbr(sd.opp))}</span><b>${opScore}</b></div></div>
+      <button class="gear" data-act="settings" aria-label="Settings">⚙</button></div>
+    <div class="hsub"><span>${esc(inningLabel(st, plays, over))}</span>${!over && st.cur && !st.cur.complete ? `<span>Count ${st.balls}-${st.strikes}</span>` : ""}<span class="mode">${esc(mode)}</span></div>
+    ${pc.cur != null ? `<button class="minipace" data-act="tab" data-tab="pace" aria-label="Open the pace meter"><span class="mpbar"><i style="left:${pc.line*100}%"></i><b class="${delta>=0?"up":"dn"}" style="left:${Math.min(pc.line,pc.cur)*100}%;width:${Math.abs(pc.cur-pc.line)*100}%"></b></span><span>${esc(paceText)}</span></button>` : ""}
+    ${controls(over)}
+    ${A.feedErr ? `<div class="warn">${esc(A.feedErr)}</div>` : ""}
+  </header>`;
+}
+function controls(over){
+  if (A.src.kind === "live") {
+    if (A.confirmOffset != null) return `<div class="sync"><span>Your TV looks ${Math.round(A.confirmOffset/1000)} seconds behind the live feed. Is that about right?</span><button class="act sm" data-act="okoffset">Yes</button><button class="ghost" data-act="resync">Re-sync</button></div>`;
+    if (A.verifyTap) return `<div class="sync"><span class="waiting">Checking</span><span>Checking that last tap against the feed.</span></div>`;
+    if (A.rec.offset != null && !A.rec.verified) return `<div class="sync"><button class="pitchbtn" data-act="sync">Pitch</button><span>One more: tap Pitch at the next release to confirm the sync. Calls open after that.</span><button class="link" data-act="resync">Start over</button></div>`;
+    if (A.syncPending) return `<div class="sync"><span class="waiting">Checking</span><span>Matching your taps to the feed. This takes about 15 seconds.</span></div>`;
+    if (A.rec.offset == null || A.syncTaps.length) return `<div class="sync"><button class="pitchbtn" data-act="sync">Pitch</button><span>${A.syncTaps.length ? `Good. Tap ${3 - A.syncTaps.length} more time${3-A.syncTaps.length===1?"":"s"}, at the release.` : "Sync to your TV: tap Pitch the moment you see the release, on three pitches in a row. Until then, kK holds the game 45 seconds and calls stay closed."}</span></div>`;
+    return `<div class="sync small"><button class="pitchbtn sm" data-act="sync">Pitch</button><span>Tap at any release to check the sync.</span><button class="link" data-act="resync">Re-sync</button></div>`;
+  }
+  if (over) return "";
+  const c = A.src.clock;
+  const lead = c.paused ? (A.autoPaused ? `<span class="waiting" role="status">Your call</span>` : `<button class="act sm" data-act="play">${c.now() > firstPitchMs(A.feed) ? "Resume" : "Play ball"}</button>`) : `<button data-act="pause">Pause</button>`;
+  return `<div class="vc"><div class="lead">${lead}</div><div class="speeds" role="group" aria-label="Speed">${[1,6,20].map(s=>`<button class="${c.speed===s?"on":""}" aria-pressed="${c.speed===s}" data-act="speed" data-v="${s}">${s}x</button>`).join("")}</div><button data-act="jump">Next call</button></div>`;
+}
+function navBar(){
+  const tabs = [["game","Game"],["pace","Pace"],["keys","Keys"],["season","Season"]];
+  return `<nav>${tabs.map(([k,n])=>`<button class="${A.tab===k?"on":""}" aria-pressed="${A.tab===k}" data-act="tab" data-tab="${k}">${n}</button>`).join("")}</nav>`;
+}
+
+// ---------- game tab ----------
+function gameTab(plays, st, over, w){
+  if (over && A.rec.final) return finalCard(plays);
+  if (!plays.some(v => v.evs.length)) return pregameCard();
+  const callOpen = !!(w && w.open && !w.seatOff && !w.needSync);
+  return flashCard(plays) + callPanel(plays, st, w) + contextStrip(plays, st, callOpen) + lastAbCard(plays);
+}
+function bookStatusText(id){
+  const s = A.bookStatus[id], b = A.books[id];
+  if (s === "ready") return `His book: ${b.n.toLocaleString()} pitches from ${plural(b.games,"game")} this season.`;
+  if (s === "building" || s === "queued") return "Building his book from this season's pitches.";
+  if (s === "error" || s === "empty") return "No season book, so kK will use what he throws today.";
+  return "";
+}
+function pregameCard(){
+  const sd = sides(), stp = starters(), pc = paceNow();
+  const tile = side => `<div class="tile"><div class="k">${esc(teamWord(side))}</div><div class="big">${esc(stp[side] ? pl(stp[side]).fullName : "Starter not yet announced")}</div><div class="foot">${esc(stp[side] ? bookStatusText(stp[side]) : "")}</div></div>`;
+  return `<section class="card"><h2>Tale of the Tape</h2>
+    <div class="tiles">${tile(sd.my)}${tile(sd.opp)}</div>
+    ${pc.line != null ? `<p>Before the first pitch, the ${esc(teamWord(sd.my))} have a <b>${Math.round(pc.line*100)}%</b> chance to win. The pace meter checks that number after every half-inning.</p>` : `<p>The pregame win chance appears once the standings load.</p>`}
+    ${A.booksBuilt ? `<p class="foot">Books were built ${esc(fmtDate(A.booksBuilt))} from this season's pitches.</p>` : ""}
+    <p class="foot">Pick three keys before the first pitch. Any slot you leave open gets filled for you.</p>
+    <button class="act wide" data-act="tab" data-tab="keys">Pick my keys (${A.rec.keys.length} of 3)</button></section>${howTo()}`;
+}
+function howTo(){
+  return `<section class="card how"><h3>How to play</h3>
+    <p><b>Call the pitch.</b> When a call window opens, call the next pitch before it is thrown: the kind of pitch first, then where it will cross the plate. Windows open with two strikes, with runners in scoring position from the sixth inning on, and in big spots late. You can also open any at-bat yourself.</p>
+    <p><b>Beat the book.</b> The book is the pitcher's own habits this season for this count and this kind of hitter. It makes its own call on every pitch you call. Agreeing with it is fine, but the real test is going against it and being right.</p>
+    <p><b>Chart the glove.</b> After each pitch you call, tell kK whether it hit the catcher's glove. That builds each pitcher's command chart and never changes your score.</p></section>`;
+}
+function famName(k){ return E.FAM_NAME[k] || k; }
+function pitchName(k, level){ return level === "advanced" ? (E.SHORT[k] || k) : famName(k); }
+function spotName(k, level){ return level === "advanced" ? E.ADV_NAME[k] : E.LOC_NAME[k]; }
+function callLabel(c){ return `${pitchName(c.pitch, c.level).toLowerCase()}, ${spotName(c.spot, c.level).toLowerCase()}`; }
+function bookLine(c, level){
+  const m = E.mixLine(c.book, c.hand, c.bkt, level);
+  if (!m.pitch.length) return "";
+  const who = c.book.generic ? "A typical pitcher" : last(c.pitcherId);
+  const scope = c.book.generic ? "" : m.key.startsWith("*") ? " vs all hitters" : ` vs ${c.hand === "L" ? "lefties" : "righties"}`;
+  const cnt = m.key.endsWith("*") ? "" : ` ${E.BUCKET_NAME[c.bkt]}`;
+  const src = c.book.generic ? " (no book yet)" : c.book.today ? " (today only)" : "";
+  const row = (label, xs, nameFn) => `<div class="mixrow"><span class="ml">${label}</span>${xs.map(x => `<span class="mx"><b>${x.pct}%</b>${esc(nameFn(x.k, level))}</span>`).join("")}</div>`;
+  return `<div class="bookline"><div class="foot"><b class="bk">The book${esc(src)}:</b> ${esc(who + scope + cnt)}</div>${row("Pitch", m.pitch, pitchName)}${row("Spot", m.spot, spotName)}</div>`;
+}
+function callPanel(plays, st, w){
+  if (!w) return `<section class="card quiet"><p>${st.cur && st.cur.complete ? "Waiting on the next hitter." : "Waiting on the next pitch."}</p></section>`;
+  const p = st.cur.src, sd = sides();
+  const who = `${esc(last(p.matchup.batter.id))} (bats ${p.matchup.batSide.code === "L" ? "left" : "right"}) vs ${esc(last(p.matchup.pitcher.id))}`;
+  if (w.needSync) return `<section class="card quiet"><div class="k">${who}</div><p><b>Sync to start calling.</b> Tap Pitch at the top the moment you see the release, on three pitches in a row. Calls open once kK knows how far behind your TV runs, so nobody can call a pitch they already saw.</p></section>`;
+  if (w.seatOff) return `<section class="card quiet"><div class="k">${who}</div><p>The ${esc(teamWord(sd.my))} are hitting. You call your own pitchers' pitches, so enjoy the at-bat, or switch to both teams in Settings.</p></section>`;
+  const existing = A.rec.calls.find(c => c.ab === w.ab && c.pn === w.pn);
+  if (!w.open) return `<section class="card quiet"><div class="k">${who}</div><p>No call window on this pitch.</p><button class="ghost" data-act="openab" data-ab="${w.ab}">Call every pitch of this at-bat</button></section>`;
+  const level = settings.level, c = callContext(st, plays);
+  if (!A.draft || A.draft.ab !== w.ab || A.draft.pn !== w.pn) A.draft = { ab:w.ab, pn:w.pn, pitch: existing ? existing.pitch : null, spot: existing ? existing.spot : null };
+  const d = A.draft;
+  const pills = (items, act, sel) => items.map(([k, label]) => `<button class="${sel===k?"on":""}" aria-pressed="${sel===k}" data-act="${act}" data-v="${k}">${esc(label)}</button>`).join("");
+  const pitchItems = level === "advanced" ? E.arsenal(c.book).map(t => [t, E.SHORT[t]||t]) : [["fastball","Fastball"],["breaking","Breaking ball"],["offspeed","Offspeed"]];
+  const spotUI = level === "advanced" ? advGrid(d.spot, "cs", c.hand) : `<div class="pills">${pills([["up","Up"],["down","Down"],["off","Off the plate"]], "cs", d.spot)}</div>`;
+  const coach = !settings.coached ? `<div class="coach"><p><b>Your first call.</b> ${A.src.kind !== "live" ? "kK skipped ahead to it, and Next call jumps to the one after. " : ""}The book shows what he usually throws here. Tap the pitch you expect, then where it crosses.${level === "base" ? " Up and Down include pitches above or below the zone, and Off the plate means wide." : ""}</p><button class="ghost sm" data-act="coached">Got it</button></div>` : "";
+  const stamp = existing && A.justLocked === w.ab + "-" + w.pn;
+  const headLabel = existing ? `<div class="k lockedlab">Locked: ${esc(callLabel(existing))}</div>` : `<div class="k">${esc(w.reasons.join(", "))}</div>`;
+  return `<section class="card callcard ${existing ? "is-locked" : ""} ${stamp ? "stamp" : ""} ${!existing && Date.now() - (A.pulse||0) < 1600 ? "pulse" : ""}">
+    <div class="callhead"><div>${headLabel}<div class="who">${who}</div></div><div class="cnt" aria-label="Count">${st.balls}-${st.strikes}</div></div>
+    ${coach}${st.cur.pitches.length ? `<div class="sofar"><span class="ml">So far</span>${st.cur.pitches.map(e => pitchChip(e, c.hand)).join("")}</div>` : ""}${bookLine(c, level)}
+    <div class="step">${d.pitch ? "Pitch" : "1. Call the pitch"}</div><div class="pills ${pitchItems.length === 4 ? "two" : ""}">${pills(pitchItems, "cp", d.pitch)}</div>
+    <div class="step">${d.spot != null ? "Spot" : "2. Call the spot"}</div>${spotUI}
+    ${existing ? `<p class="locked" role="status"><b>✓ Locked in.</b> The book is calling ${esc(pitchName(existing.bookCall.pitch, existing.level).toLowerCase())}, ${esc(spotName(existing.bookCall.spot, existing.level).toLowerCase())}. You can change your call until the pitch is thrown.</p>` : `<p class="foot">Your call locks when you pick the spot.${A.src.kind !== "live" ? " kK waits for your call." : ""}</p>`}
+    ${!existing && A.src.kind !== "live" ? `<button class="ghost" data-act="skip" data-k="${w.ab}-${w.pn}">Skip this pitch</button>` : ""}
+  </section>`;
+}
+// Thirteen spots relative to the hitter. Inside sits on the hitter's side, and the TV view mirrors the catcher's view.
+function advGrid(sel, act, hand){
+  const tv = settings.view === "tv";
+  const hitterOnLeft = tv ? hand === "L" : hand !== "L";
+  const cols = hitterOnLeft ? ["in","mid","away"] : ["away","mid","in"];
+  const rows = [["H","High"],["M","Mid"],["L","Low"]];
+  const b = (k, label, cls) => `<button class="${cls||""} ${sel===k?"on":""}" aria-pressed="${sel===k}" aria-label="${esc(E.ADV_NAME[k])}" data-act="${act}" data-v="${k}">${esc(label)}</button>`;
+  const inner = rows.map(([r]) => cols.map(cc => b(`${r}-${cc}`, E.ADV_NAME[`${r}-${cc}`], "z")).join("")).join("");
+  const left = hitterOnLeft ? "C-in" : "C-away", right = hitterOnLeft ? "C-away" : "C-in";
+  return `<div class="advgrid">${b("C-high","Chase high","ch top")}${b(left, left === "C-in" ? "Chase in" : "Chase away","ch side l")}<div class="inner">${inner}</div>${b(right, right === "C-in" ? "Chase in" : "Chase away","ch side r")}${b("C-low","Chase low","ch bot")}<svg class="plate" viewBox="0 0 44 18" aria-hidden="true"><path d="M2 2 H42 V9 L22 16 L2 9 Z"/></svg></div>
+    <div class="foot center">${tv ? "TV view" : "Catcher's view"}. The hitter stands on the ${hitterOnLeft ? "left" : "right"}, the inside edge.</div>`;
+}
+function flashCard(plays){
+  if (!A.flash) return "";
+  const c = A.rec.calls.find(x => x.ab === A.flash.ab && x.pn === A.flash.pn); if (!c) return "";
+  const e = findPitch(c.ab, c.pn); if (!e || !e.details.type) return "";
+  const a = actualOf(e, c.hand), g = E.grade(c, a, c.level), bg = E.grade({ pitch:c.bookCall.pitch, spot:c.bookCall.spot }, a, c.level);
+  const sp = a.spot ? spotName(c.level === "advanced" ? a.spot.adv : a.spot.base, c.level).toLowerCase() : "untracked";
+  const title = g.pitchRight && g.spotCredit === 1 ? "Called it" : g.pitchRight ? "Had the pitch" : g.spotCredit === 1 ? "Had the spot" : g.spotCredit ? "Close on the spot" : "Missed it";
+  const plWord = k => c.level === "advanced" ? E.tn(k) + "s" : k === "offspeed" ? "offspeed pitches" : E.FAM_NAME[k].toLowerCase() + "s";
+  const why = c.bookPct ? ` ${last(c.pitcherId)} throws ${plWord(c.bookCall.pitch)} ${c.bookPct}% of the time in this spot.` : "";
+  const vsBook = c.against ? (g.pitchRight && !bg.pitchRight ? "You beat the book on this one." : bg.pitchRight && !g.pitchRight ? "The book had it." + why : "") : "";
+  const mark = x => x ? `<span class="ok">✓</span>` : `<span class="no">✗</span>`;
+  const ask = A.chip && A.chip.ab === c.ab && A.chip.pn === c.pn;
+  const fresh = A.flashShown !== c.ab + "-" + c.pn; A.flashShown = c.ab + "-" + c.pn;
+  return `<section class="card flash ${g.pitchRight ? "good" : ""} ${fresh ? "rise" : ""}" role="status">
+    <div class="verdict">${esc(title)}</div>
+    <p class="actual">${esc(cap(E.tn(a.type)))}${a.speed ? `, ${Math.round(a.speed)} mph` : ""}, ${esc(sp)}.</p>
+    <div class="vs"><div><span class="k">You</span> pitch ${mark(g.pitchRight)} spot ${mark(g.spotCredit === 1)}</div><div><span class="k">Book</span> pitch ${mark(bg.pitchRight)} spot ${mark(bg.spotCredit === 1)}</div></div>
+    ${vsBook ? `<p class="foot">${esc(vsBook)}</p>` : ""}
+    ${ask ? `<div class="glove"><div class="k">Hit the glove?</div><p class="chipq">Did the pitch land where the catcher set up?</p><div class="pills"><button data-act="glove" data-v="yes">Yes</button><button data-act="glove" data-v="missed">Missed</button><button data-act="glove" data-v="unseen">Couldn't see</button></div><div class="cbar"><i id="chipbar"></i></div></div>` : c.glove && c.glove.answer !== "timeout" ? `<p class="foot">Glove: ${c.glove.answer === "yes" ? "he hit it" : c.glove.answer === "missed" ? "he missed it" : "you couldn't see it"}.</p>` : ""}</section>`;
+}
+function pitchChip(e, hand){
+  const t = e.details.type ? e.details.type.code : null, sp = E.spotOf(e.pitchData, hand);
+  const d = e.details, res = d.isInPlay ? "in play" : d.code === "F" ? "foul" : d.isBall ? "ball" : (d.code === "S" || d.code === "W") ? "swinging strike" : d.isStrike ? "called strike" : (d.description||"").toLowerCase();
+  return `<span class="pc"><b>${esc(t ? (E.SHORT[t]||t) : "Untracked")}</b>${e.pitchData && e.pitchData.startSpeed ? " " + Math.round(e.pitchData.startSpeed) : ""}${sp ? ", " + esc(E.LOC_WORDS[sp.base]) : ""}, <i>${esc(res)}</i></span>`;
+}
+function contextStrip(plays, st, callOpen){
+  if (!st.cur) return "";
+  const v = st.cur, p = v.src, pid = p.matchup.pitcher.id, bid = p.matchup.batter.id, hand = p.matchup.batSide.code;
+  const earlier = plays.filter(x => x !== v && x.complete && x.src.matchup.batter.id === bid && x.src.matchup.pitcher.id === pid);
+  const prev = earlier[earlier.length-1];
+  const times = earlier.length + 1;
+  const bk = A.books[pid]; let velo = "";
+  if (bk && bk.velo) {
+    const today = {}; for (const x of plays) if (x.src.matchup.pitcher.id === pid) for (const e of x.pitches) { const tp = e.details.type && e.details.type.code; if (tp && E.fam(tp) === "fastball" && e.pitchData && e.pitchData.startSpeed) (today[tp] = today[tp] || []).push(e.pitchData.startSpeed); }
+    const main = Object.keys(today).sort((a,b)=>today[b].length-today[a].length)[0];
+    if (main && bk.velo[main] && bk.velo[main].n >= 20 && today[main].length >= 3) {
+      const t = today[main].reduce((a,b)=>a+b,0)/today[main].length, s = bk.velo[main].s / bk.velo[main].n, dlt = t - s;
+      velo = `His ${E.tn(main)} is averaging ${t.toFixed(1)} mph today, ${Math.abs(dlt) < 0.3 ? "right at" : Math.abs(dlt).toFixed(1) + " mph " + (dlt > 0 ? "above" : "below")} his season average of ${s.toFixed(1)}.`;
+    }
+  }
+  const isStarter = pid === starters()[p.about.halfInning === "top" ? "home" : "away"];
+  const tto = isStarter && times >= 2 && !v.complete ? `This is ${last(bid)}'s ${E.ordinal(times)} time facing him today. ` : "";
+  return `<section class="card ctx">
+    ${callOpen ? "" : `<div class="row3"><div class="k">${v.complete ? "Last at-bat" : "This at-bat"}</div><div class="seq">${v.pitches.length ? v.pitches.map(e => pitchChip(e, hand)).join("") : `<span class="foot">No pitches yet.</span>`}</div></div>`}
+    <div class="row3"><div class="k">Last time up</div><div class="seq">${prev ? prev.pitches.map(e => pitchChip(e, prev.src.matchup.batSide.code)).join("") + `<span class="foot">${esc(E.ordinal(prev.src.about.inning))} inning: ${esc(prev.src.result.event)}.</span>` : `<span class="foot">This is ${esc(last(bid))}'s first look at ${esc(last(pid))} today.</span>`}</div></div>
+    ${tto || velo ? `<div class="row3"><div class="k">Today</div><div class="foot">${esc(tto + velo)}</div></div>` : ""}
+  </section>`;
+}
+function lastAbCard(plays){
+  const done = plays.filter(v => v.complete), v = done[done.length-1]; if (!v) return "";
+  const mine = A.rec.calls.filter(c => c.ab === v.src.about.atBatIndex && c.g && !c.void);
+  let grade = "";
+  if (mine.length) {
+    const you = mine.filter(c=>c.g.pitchRight).length, bk = mine.filter(c=>c.bg.pitchRight).length, sp = mine.filter(c=>c.g.spotCredit===1).length;
+    grade = `<div class="abgrade">${mine.map(c => `<div class="gl"><span class="${c.g.pitchRight?"ok":"no"}" aria-label="${c.g.pitchRight?"Right":"Wrong"}">${c.g.pitchRight?"✓":"✗"}</span> On ${esc(c.count)} you called ${esc(callLabel(c))}${c.against ? " (against the book)" : ""}. It was a ${esc(E.tn(c.actual.type))}${c.actual.spot ? ", " + esc(spotName(c.level === "advanced" ? c.actual.spot.adv : c.actual.spot.base, c.level).toLowerCase()) : ""}.</div>`).join("")}
+      <div class="foot">You had ${you} of ${mine.length} pitches and ${sp} of ${mine.length} spots. The book had ${bk} of ${mine.length} pitches.</div></div>`;
+  }
+  const voided = A.rec.calls.filter(c => c.ab === v.src.about.atBatIndex && c.void);
+  return `<section class="card read"><div class="k">The read</div><p>${esc(E.sentence(v, done.slice(0,-1), A.feed))}</p>${grade}${voided.length ? `<p class="foot">${plural(voided.length,"call")} did not count because ${esc(voided[0].void)}.</p>` : ""}</section>`;
+}
+function finalCard(plays){
+  const f = A.rec.final, sd = sides(), L = f.line, dk = f.keys.find(k => k.id === f.deciding);
+  const sea = S.get("kk-season", { games:[] }), pool = sea.games.filter(gm => !!gm.demo === (A.src.kind === "demo"));
+  const sT = pool.reduce((a,gm) => { a.ag += gm.line.against||0; a.y += gm.line.againstYou||0; a.b += gm.line.againstBook||0; return a; }, { ag:0, y:0, b:0 });
+  const seasonLine = sT.ag && pool.length > 1 ? ` Across your ${A.src.kind === "demo" ? "demo games" : "season"}, you are right ${sT.y} of ${sT.ag} times against the book, and the book is right ${sT.b}.` : "";
+  const tonight = `You went against the book ${plural(L.against,"time")} and were ${L.againstYou ? "right " + plural(L.againstYou,"time") : "never right"}. The book was right ${plural(L.againstBook,"time")} on those same pitches`;
+  const verdictOnly = !L.against ? "You agreed with the book on every call, so tonight was a tie by design." : L.against < 5 ? "Too few calls against the book to name a winner tonight." : L.againstYou > L.againstBook ? "You out-read the book tonight." : L.againstYou === L.againstBook ? "Even with the book tonight." : "The book read the pitchers better tonight.";
+  const headline0 = !L.n ? "You did not call any pitches in this game."
+    : !L.against ? "You agreed with the book on every call, so tonight was a tie by design. Go against it when the at-bat tells you to." + seasonLine
+    : L.against < 5 ? `${tonight}. That is too few to name a winner for one night.${seasonLine}`
+    : `${tonight}${L.againstYou > L.againstBook ? ", so you out-read it tonight." : L.againstYou === L.againstBook ? ", so it was even." : ", so the book read the pitchers better tonight."}${seasonLine}`;
+  const best = bestRead(A.rec.calls);
+  const duel = L.against ? [L.againstYou, L.againstBook, "Right when you went against the book"] : [L.you, L.book, "Pitches right"];
+  return `<section class="card final"><div class="k">Final</div>
+    <h2 class="fscore">${esc(teamWord(sd.my))} ${f.my}, ${esc(teamWord(sd.opp))} ${f.op}</h2>
+    ${L.n ? `<div class="duel" aria-label="${esc(duel[2])}: you ${duel[0]}, the book ${duel[1]}"><div><b>${duel[0]}</b><span>You</span></div><div class="vsw">vs</div><div><b>${duel[1]}</b><span>The book</span></div></div><p class="foot center">${esc(duel[2])}</p>` : ""}
+    <p class="headline">${esc(L.n ? verdictOnly + seasonLine : headline0)}</p>
+    ${best ? `<p>Your best read was ${esc(best)}.</p>` : ""}
+    ${L.n ? `<p class="foot">On spots, you were right on ${L.spot} of ${plural(L.n,"call")}, and the book was right on ${L.bspot}.</p>` : ""}
+    <div class="boxline"><div><b>${L.n}</b><span>${L.n===1?"call":"calls"}</span></div><div><b>${L.you}</b><span>${L.you===1?"pitch":"pitches"}</span></div><div><b>${L.spot}</b><span>${L.spot===1?"spot":"spots"}</span></div><div><b>${L.both}</b><span>both right</span></div></div>
+    <h3>Keys</h3>${f.keys.map(k => `<div class="key ${k.hit?"won":"lost"}"><b>${k.hit?"Hit":"Missed"}:</b> ${esc(k.text)} <span class="foot">${esc(cap(k.show))}.</span></div>`).join("")}
+    <p>${dk ? `The deciding key was "${esc(dk.text.replace(/\.$/,""))}."` : "None of your keys decided this one."}</p>
+    ${f.decidingAB ? `<p>The ${esc(teamWord(f.won ? sd.my : sd.opp))} took the lead for good on this play: ${esc(f.decidingAB.text)}${f.decidingAB.d ? `. It moved the win chance ${f.decidingAB.d} points` : ""}.</p>` : ""}
+    <button class="act wide" data-act="copy">Copy my line for the group chat</button>
+    <p class="foot">${A.src.kind === "demo" ? "Saved to your season and marked as a demo game. You can clear demo games in Settings." : "Saved to your season."}</p></section>`;
+}
+
+// ---------- pace tab ----------
+function paceTab(plays, over){
+  const sd = sides(), pc = paceNow(), H = A.rec.halves;
+  if (pc.line == null) return `<section class="card"><p>The pace meter starts once the standings load.</p></section>`;
+  const h = pc.h, cur = pc.cur, delta = Math.round((cur - pc.line) * 100), me = teamWord(sd.my);
+  const lo = h && h.mlb != null ? Math.min(h.mc, h.mlb) : null, hi = h && h.mlb != null ? Math.max(h.mc, h.mlb) : null;
+  const n = Math.max(18, H.length + (H.length % 2));
+  const bars = []; for (let i = 0; i < n; i++) { const x = H[i];
+    if (!x) { bars.push(`<i class="empty" aria-hidden="true"></i>`); continue; }
+    const dd = (x.cons - pc.line) * 100, ht = Math.max(3, Math.min(34, 6 * Math.sqrt(Math.abs(dd))));
+    bars.push(`<i class="${dd>=0?"up":"dn"}" style="--h:${ht}px" role="img" aria-label="${x.top?"Top":"Bottom"} of the ${E.ordinal(x.inning)}: ${Math.round(x.cons*100)}%, ${Math.abs(Math.round(dd))} ${dd>=0?"above":"below"} the line"></i>`); }
+  const sentence = A.rec.final ? `Final: the ${me} ${A.rec.final.won ? "won" : "lost"}. They started the night with a ${Math.round(pc.line*100)}% chance.`
+    : h ? `The ${me} have a ${Math.round(cur*100)}% chance to win after the ${h.top?"top":"bottom"} of the ${E.ordinal(h.inning)}, ${plural(Math.abs(delta),"point")} ${delta>=0?"above":"below"} the pregame line of ${Math.round(pc.line*100)}%.`
+    : `Before the first pitch, the ${me} have a ${Math.round(pc.line*100)}% chance to win. The meter moves only when a half-inning ends, never on a single pitch.`;
+  const sw = abSwings(plays).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3);
+  let engines = "";
+  if (h && !h.done) {
+    const gap = h.mlb == null ? null : Math.round(Math.abs(h.mc - h.mlb) * 100);
+    engines = `<div class="engines"><div><span class="k">Game simulation</span><b>${Math.round(h.mc*100)}%</b><span class="foot">Plays out the rest of the game 5,000 times with these lineups and arms.</span></div><div><span class="k">${h.standIn ? "Typical-game model" : "MLB win probability"}</span><b>${h.mlb==null ? "Waiting" : Math.round(h.mlb*100)+"%"}</b><span class="foot">${h.standIn ? "How a game in this spot usually ends, adjusted for team strength. In the demo it stands in for MLB's number." : "How games in this spot usually end, adjusted for team strength."}</span></div></div>
+      <p class="foot">${gap == null ? "MLB's number for this half-inning has not posted yet, so the bar shows the simulation until it does." : gap >= 8 ? `The two models differ by ${gap} points. The simulation knows who is pitching and who is due up, and the other model knows how games like this usually end.` : gap <= 2 ? "The two models agree." : `The two models are within ${plural(gap,"point")} of each other.`}</p>`;
+  }
+  const from = A.paceFrom != null && A.paceFrom !== cur ? A.paceFrom : null; A.paceFrom = cur;
+  const inn = []; for (let i = 0; i < n / 2; i++) inn.push(`<span>${i+1}</span>`);
+  return `<section class="card pace"><div class="k">${esc(me)} win chance</div>
+    <div class="paceHero">${A.rec.final ? `<b>${A.rec.final.won ? "Won" : "Lost"} ${A.rec.final.my}-${A.rec.final.op}</b><span class="muted">Started at ${Math.round(pc.line*100)}%</span>` : `<b>${Math.round(cur*100)}%</b>${h ? `<span class="${delta>=0?"ok":"no"}">${delta>=0?"+":"−"}${Math.abs(delta)} vs pregame</span>` : ""}`}</div>
+    <div class="meter" role="img" aria-label="${esc(sentence)}"><div class="band" style="${lo!=null && !h.done?`left:${lo*100}%;width:${Math.max(0.6,(hi-lo)*100)}%`:"display:none"}"></div>
+      <div class="fill ${delta>=0?"up":"dn"}" style="left:${Math.min(pc.line,cur)*100}%;width:${Math.abs(cur-pc.line)*100}%"></div>
+      <div class="tick" style="left:${pc.line*100}%"></div><div class="dot ${from != null ? "slide" : ""}" style="left:clamp(10px, ${cur*100}%, calc(100% - 10px));${from != null ? `--from:clamp(10px, ${from*100}%, calc(100% - 10px))` : ""}"></div></div>
+    <div class="scale"><span>0%</span><span>Marker: pregame line</span><span>100%</span></div>
+    <p class="pline">${esc(sentence)}</p>${engines}
+    <div class="k">The shape of the game</div><div class="strip"><div class="axis"></div>${bars.join("")}</div><div class="innings" style="grid-template-columns:repeat(${n/2},1fr)" aria-hidden="true">${inn.join("")}</div>
+    <p class="foot">One bar per half-inning. Bars above the line mean the ${esc(me)} were ahead of the pregame line, and bars below mean they were behind it. The chance naturally dips after the ${esc(me)} bat without scoring and rises after they hold the other team, so a zigzag is normal.</p></section>
+  <section class="card"><h3>${over ? "Biggest swings" : "Biggest swings so far"}</h3>${sw.length ? sw.map(s => `<div class="swing"><b class="${s.d>=0?"ok":"no"}">${s.d>=0?"+":"−"}${Math.abs(Math.round(s.d))}</b> ${esc(abText(s.v))}.</div>`).join("") : `<p class="foot">Swings appear as half-innings finish.</p>`}</section>`;
+}
+
+// ---------- keys tab ----------
+function keysTab(plays, over){
+  const cat = E.keyCatalog(keyCtx()), s = statsNow(plays);
+  if (!A.rec.keysLocked) {
+    return `<section class="card"><h2>Keys to the Game</h2><p>Pick three. Each one is graded straight from the game data, through five innings and at the final out.</p>
+      ${cat.map(k => `<button class="keypick ${A.rec.keys.includes(k.id)?"on":""}" aria-pressed="${A.rec.keys.includes(k.id)}" data-act="key" data-v="${k.id}">${A.rec.keys.includes(k.id) ? "✓ " : ""}${esc(k.text)}</button>`).join("")}
+      <p class="foot" role="status">${A.keyMsg ? esc(A.keyMsg) + " " : ""}${A.rec.keys.length} of 3 picked. Keys lock at the first pitch, and any empty slot is filled for you.</p></section>`;
+  }
+  const inn = inningsDone(plays);
+  const rows = A.rec.keys.map(id => { const k = cat.find(x=>x.id===id); const g = E.gradeKey(k, s, over ? "final" : "live", inn); const f5 = A.rec.five && A.rec.five.find(x=>x.id===id);
+    const cls = ["Hit","On track","Clinched"].includes(g.status) ? "won" : g.status==="Too close to call" ? "close" : "lost";
+    return `<div class="key ${cls}"><b>${esc(g.status)}:</b> ${esc(k.text)}<div class="foot">${esc(cap(g.show))}.${f5 ? ` Through five innings it was ${esc(f5.status.toLowerCase())}.` : ""}</div></div>`; }).join("");
+  return `<section class="card"><h2>Your keys</h2>${rows}<p class="foot">The status updates as you watch. The official grades come through five innings and at the final out.</p></section>`;
+}
+
+// ---------- season tab ----------
+function seasonTab(){
+  const sea = S.get("kk-season", { games:[], pitchers:{}, glove:{}, keys:{}, reads:[] });
+  const seg = A.seg || "read", segs = [["read","Pitchers you can read"],["glove","Your eye on command"],["keys","Keys record"]];
+  const real = sea.games.filter(g => !g.demo), use = real.length ? real : sea.games;
+  const tot = use.reduce((a,g) => { a.n += g.line.n; a.ag += g.line.against||0; a.agy += g.line.againstYou||0; a.agb += g.line.againstBook||0; return a; }, { n:0, ag:0, agy:0, agb:0 });
+  let body = "";
+  if (seg === "read") {
+    const edge = p => ((p.againstYou||0) - (p.againstBook||0)) / Math.max(1, p.against||0);
+    const ps = Object.values(sea.pitchers).filter(p => p.n >= 5).sort((a,b) => edge(b) - edge(a));
+    body = ps.length ? `<table><thead><tr><th>Pitcher</th><th>Calls</th><th>Pitch right</th><th>Against the book</th></tr></thead><tbody>${ps.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.n}</td><td>${Math.round(100*p.you/p.n)}%</td><td>${p.against ? `${p.againstYou||0} of ${p.against} (book ${p.againstBook||0})` : "None yet"}</td></tr>`).join("")}</tbody></table>
+      <p class="foot">Sorted by how often your calls against the book beat it. A pitcher appears after five calls${ps.some(p => p.n >= 25) ? "" : ", and your read on a pitcher becomes reliable after about 25"}.</p>`
+      : `<p class="foot">Call pitches in a live game or a replay, and the pitchers you can read will show up here.</p>`;
+    const rd = (sea.reads||[]).slice(-5).reverse();
+    if (rd.length) body += `<h3>Best reads</h3>${rd.map(r => `<div class="gp foot">${esc(fmtDate(r.date))}: ${esc(r.text)}</div>`).join("")}`;
+  } else if (seg === "glove") {
+    const gs = Object.values(sea.glove);
+    body = gs.length ? `<p class="foot">These charts come from your own answers to "Hit the glove?", so they are your read of each pitcher's command.</p>` + gs.map(g => `<div class="gp"><b>${esc(g.name)}</b>${Object.entries(g.types).map(([t,x])=>`<div class="cmd"><span>${esc(E.SHORT[t]||t)}</span><span class="cbar2" role="img" aria-label="Hit the glove on ${x.hit} of ${x.n}"><i style="width:${100*x.hit/x.n}%"></i></span><span class="foot">${x.hit} of ${x.n}</span></div><div class="foot">${x.miss ? `He missed his spot on ${x.miss} of the ${x.n} ${esc(E.tn(t))}${x.n===1?"":"s"} you charted${x.missHard ? `, and ${x.missHard} of those misses ${x.missHard===1?"was":"were"} hit 95 mph or harder` : ""}.` : `He hit the glove on every ${esc(E.tn(t))} you charted.`}</div>`).join("")}</div>`).join("")
+      : `<p class="foot">Answer "Hit the glove?" after your calls, and each pitcher's command chart builds here.</p>`;
+  } else {
+    const ks = Object.values(sea.keys);
+    body = ks.length ? ks.map(k => `<div class="key"><div>${esc(k.text)}</div><div class="foot">When it hit, your team went ${k.hitW}-${k.hitL}. When it missed, your team went ${k.missW}-${k.missL}.</div></div>`).join("") : `<p class="foot">Your keys, and how your team did when each one hit, collect here.</p>`;
+  }
+  const gl = sea.games.slice(-8).reverse();
+  return `<section class="card"><h2>Your season</h2>${sea.games.length ? `<p class="foot">${plural(use.length,"game")}${real.length ? "" : " (demo)"} and ${plural(tot.n,"call")}. Against the book you were right ${tot.agy} of ${tot.ag} times, and the book was right ${plural(tot.agb,"time")}.</p>` : ""}
+    <div class="seg" role="group">${segs.map(([k,n])=>`<button class="${seg===k?"on":""}" aria-pressed="${seg===k}" data-act="seg" data-v="${k}">${n}</button>`).join("")}</div>${body}</section>
+    <section class="card"><h3>Games</h3>${gl.length ? gl.map(g=>`<div class="gp"><b>${g.won?"W":"L"} ${g.my}-${g.op} vs ${esc(g.opp)}${g.demo ? " (demo)" : ""}</b> <span class="foot">${esc(fmtDate(g.date))}. ${g.line.against ? `Against the book, you were right ${g.line.againstYou} of ${g.line.against} times and the book was right ${g.line.againstBook}.` : `${g.line.you} of ${g.line.n} pitches right.`}</span></div>`).join("") : `<p class="foot">Finished games land here.</p>`}
+    <p class="foot">Your season is saved on this phone. Use Export in Settings to keep a copy, and add kK to your Home Screen so it opens like an app.</p></section>`;
+}
+function fmtDate(d){ try { return new Date(d + "T12:00:00").toLocaleDateString([], { month:"short", day:"numeric" }); } catch(e){ return d; } }
+
+// ---------- settings ----------
+function sheet(){
+  const c = settings.colors, opt = (k, v, label) => `<button class="${settings[k]===v?"on":""}" aria-pressed="${settings[k]===v}" data-act="set" data-k="${k}" data-v="${v}">${label}</button>`;
+  return `<div class="sheet" role="dialog" aria-label="Settings"><div class="sheetin"><h2>Settings</h2>
+    <label>Call level</label><div class="pills">${opt("level","base","Base: kind of pitch and spot")}${opt("level","advanced","Advanced: exact pitch and spot")}</div>
+    <label>Call pitches for</label><div class="pills">${opt("seat","mine","My team's pitchers")}${opt("seat","both","Both teams")}</div>
+    <label>How many windows</label><div class="pills">${opt("allTwo",false,"Up to two per at-bat")}${opt("allTwo",true,"Every two-strike pitch")}</div>
+    <label>Ask "Hit the glove?"</label><div class="pills">${opt("glove",true,"Yes")}${opt("glove",false,"No")}</div>
+    <label>Advanced grid</label><div class="pills">${opt("view","tv","TV view")}${opt("view","catcher","Catcher's view")}</div>
+    <label>Team colors</label><div class="colors"><input type="color" aria-label="Primary color" data-col="p" value="${c.p}"><input type="color" aria-label="Secondary color" data-col="s" value="${c.s}"><input type="color" aria-label="Accent color" data-col="t" value="${c.t}"><button class="ghost" data-act="resetcolors">Braves colors</button></div>
+    <label for="printIn">Your own pregame win chance (optional)</label><input class="txt" id="printIn" inputmode="decimal" placeholder="For example 38" value="${esc(settings.print)}"><p class="foot">If you enter your own percentage for your team, it replaces kK's pregame estimate for this game.</p>
+    <label>Your season</label><div class="row"><button class="ghost" data-act="export">Export</button><label class="ghost filebtn">Import<input type="file" accept="application/json" id="importIn"></label><button class="ghost" data-act="cleardemo">Clear demo games</button></div>
+    <div class="row"><button class="act" data-act="closesheet">Done</button><button class="ghost" data-act="newgame">Pick another game</button></div>
+  </div></div>`;
+}
+
+// ---------- start screen ----------
+async function renderStart(){
+  const app = $("#app");
+  if (A.startHtml) { app.innerHTML = A.startHtml; return; }
+  app.innerHTML = `<div class="start"><div class="hero">${logo(132)}<h1>Call the pitch.</h1><p>Name it before it is thrown, beat the book, and learn how a pitcher really works.</p></div>
+    <div id="games"><section class="card"><p class="foot">Looking for your team's games...</p></section></div>
+    <section class="card demo" id="democard"><h3>Try it now</h3><p>Play a simulated game to learn how the calls work. The demo's results are invented.</p><button class="act wide" data-act="demo">Play a demo game</button></section>
+    <section class="card how steps"><h3>How it works</h3>
+      <div class="step3"><b>Call the pitch</b><p>When a call window opens, pick the pitch and where it will cross the plate before it is thrown.</p></div>
+      <div class="step3"><b>Beat the book</b><p>The book is the pitcher's own habits this season. Go against it when the at-bat tells you to, and be right.</p></div>
+      <div class="step3"><b>Build your season</b><p>Every game adds to the pitchers you can read, your eye on their command, and your keys record.</p></div></section>
+    <details class="card more"><summary>Replay a game by its MLB game ID</summary><div class="row"><input class="txt" id="pkIn" inputmode="numeric" aria-label="MLB game ID" placeholder="Game ID"><button class="ghost" data-act="replaypk">Replay</button></div></details></div>`;
+  A.startHtml = app.innerHTML;
+  await loadSchedule();
+}
+async function loadSchedule(){
+  const el = () => $("#games");
+  try {
+    const today = new Date(), fmt = d => d.toISOString().slice(0,10);
+    const sch = await j(`/api/v1/schedule?sportId=1&teamId=${settings.team}&startDate=${fmt(new Date(today - 14*864e5))}&endDate=${fmt(new Date(+today + 4*864e5))}&hydrate=probablePitcher`);
+    const games = []; for (const d of sch.dates||[]) for (const g of d.games) games.push(g);
+    const live = games.filter(g => g.status.abstractGameState !== "Final").slice(0,3), done = games.filter(g => g.status.abstractGameState === "Final").slice(-6).reverse();
+    const when = g => new Date(g.gameDate).toLocaleString([], {weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+    const row = (g, act) => `<button class="gamebtn" data-act="${act}" data-pk="${g.gamePk}"><b>${esc(g.teams.away.team.name)} at ${esc(g.teams.home.team.name)}</b><span>${esc(when(g))}${g.status.abstractGameState === "Final" ? `. Final ${g.teams.away.score}-${g.teams.home.score}` : ""}</span></button>`;
+    const feat = live[0];
+    const featured = feat ? `<section class="card featured"><div class="k">${feat.status.abstractGameState === "Live" ? "On now" : "Next game"}${feat.seriesDescription && feat.gameType !== "R" ? ", " + esc(feat.seriesDescription) : ""}</div><h2>${esc(feat.teams.away.team.name)} at ${esc(feat.teams.home.team.name)}</h2><p class="foot">${esc(when(feat))}</p><button class="act wide" data-act="live" data-pk="${feat.gamePk}">Watch live</button></section>` : "";
+    const html = featured + (live.length > 1 ? `<section class="card"><h3>Coming up</h3>${live.slice(1).map(g => row(g,"live")).join("")}</section>` : "") + (done.length ? `<section class="card"><h3>Replay a recent game</h3>${done.map(g => row(g,"replay")).join("")}</section>` : "");
+    if (el()) el().innerHTML = html || `<section class="card"><p class="foot">No games found for your team in the last two weeks.</p></section>`;
+    if (feat) { const dc = $("#democard"); if (dc) dc.classList.add("quietdemo"); }
+  } catch(e) {
+    if (el()) el().innerHTML = `<section class="card"><p>MLB's schedule didn't load.</p><p class="foot">Check your connection and try again, or play the demo game.</p><button class="ghost" data-act="retry">Try again</button></section>`;
+  }
+  A.startHtml = $("#app").innerHTML;
+}
+function bindStart(){}
+async function startAction(b){
+  const act = b.dataset.act;
+  try {
+    if (act === "demo") await startDemo();
+    if (act === "live") await startLive(+b.dataset.pk);
+    if (act === "replay") await startReplay(+b.dataset.pk);
+    if (act === "replaypk") { const v = +$("#pkIn").value; if (v) await startReplay(v); }
+    if (act === "retry") { const g = $("#games"); if (g) g.innerHTML = `<section class="card"><p class="foot">Looking for your team's games...</p></section>`; await loadSchedule(); }
+  } catch(e) { alert("That game could not be loaded. " + e.message); }
+}
+function afterLoad(){ A.startHtml = null; A.tab = "game"; A.chip = null; A.flash = null; A.draft = null; A.lastWin = null; render(true); }
+
+// ---------- events ----------
+function bind(){
+  document.querySelectorAll("#app [data-col]").forEach(i => i.oninput = () => { settings.colors[i.dataset.col] = i.value; saveSettings(); applyTheme(); });
+  const pi = $("#printIn"); if (pi) pi.onchange = () => { settings.print = pi.value.trim(); saveSettings(); A.rec.pregame = null; A.rec.halves = []; A.rec.swings = []; render(true); };
+  const im = $("#importIn"); if (im) im.onchange = () => { const f = im.files[0]; if (!f) return; f.text().then(t => { const d = JSON.parse(t); if (!d || !Array.isArray(d.games)) throw 0; S.set("kk-season", d); toast("Your season was imported."); }).catch(() => toast("That file is not a kK season export.")); };
+}
+function act(b){
+  const a = b.dataset.act, v = b.dataset.v;
+  if (a === "tab") { A.tab = b.dataset.tab; window.scrollTo(0,0); }
+  else if (a === "settings") A.sheet = "settings";
+  else if (a === "closesheet") A.sheet = null;
+  else if (a === "set") { settings[b.dataset.k] = v === "true" ? true : v === "false" ? false : v; saveSettings(); A.draft = null; }
+  else if (a === "resetcolors") { settings.colors = Object.assign({}, DEF.colors); saveSettings(); applyTheme(); }
+  else if (a === "newgame") { A.feed = null; A.src = null; A.sheet = null; A.startHtml = null; return render(true); }
+  else if (a === "play") { const first = A.src.clock.now() <= firstPitchMs(A.feed); A.src.clock.play(); if (first) { A.rec.keysLocked || (fillKeys(), A.rec.keysLocked = true, saveRec()); jumpToNextCall(); return; } }
+  else if (a === "pause") { A.src.clock.pause(); A.autoPaused = null; }
+  else if (a === "speed") A.src.clock.setSpeed(+v);
+  else if (a === "jump") return jumpToNextCall();
+  else if (a === "sync") return syncTap();
+  else if (a === "resync") { A.rec.offset = null; A.rec.verified = false; A.syncTaps = []; A.syncPending = null; A.confirmOffset = null; A.verifyTap = null; saveRec(); }
+  else if (a === "okoffset") { setOffset(A.confirmOffset); }
+  else if (a === "openab") { A.rec.openAB = +b.dataset.ab; saveRec(); }
+  else if (a === "skip") { A.skipped[b.dataset.k] = true; A.autoPaused = null; A.src.clock.play(); }
+  else if (a === "coached") { settings.coached = true; saveSettings(); }
+  else if (a === "cp" || a === "cs") {
+    const d = A.draft || {};
+    if (a === "cp") d.pitch = v; else d.spot = v;
+    A.draft = d;
+    if (d.pitch != null && d.spot != null) { if (!settings.coached) { settings.coached = true; saveSettings(); } return lockCall(); }
+  }
+  else if (a === "glove") return answerGlove(v);
+  else if (a === "key") {
+    const k = A.rec.keys; A.keyMsg = null;
+    if (k.includes(v)) A.rec.keys = k.filter(x=>x!==v); else if (k.length < 3) k.push(v); else A.keyMsg = "You already have three. Unpick one to swap it.";
+    saveRec();
+  }
+  else if (a === "seg") A.seg = v;
+  else if (a === "cleardemo") { const sea = S.get("kk-season", null); if (sea) { sea.games = sea.games.filter(g=>!g.demo); sea.reads = (sea.reads||[]).filter(r=>!r.demo); for (const k of ["pitchers","glove","keys"]) for (const id in sea[k]) if (sea[k][id].demo) delete sea[k][id]; S.set("kk-season", sea); } toast("Demo games were cleared from your season."); return; }
+  else if (a === "export") {
+    const data = JSON.stringify(S.get("kk-season", { games:[] }));
+    try { const url = URL.createObjectURL(new Blob([data], { type:"application/json" })); const l = document.createElement("a"); l.href = url; l.download = "kk-season.json"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); toast("Your season was saved as kk-season.json."); }
+    catch(e){ prompt("Copy your season:", data); }
+    return;
+  }
+  else if (a === "copy") {
+    const t = shareText();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Copied. Paste it in the group chat."), () => { prompt("Copy your line:", t); });
+    return;
+  }
+  render(true);
+}
+
+// ---------- boot ----------
+const appEl = $("#app");
+appEl.addEventListener("pointerdown", e => { if (e.target.closest("button, input, label, summary")) A.holdUntil = Date.now() + 450; });
+appEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || !appEl.contains(b)) return;
+  A.holdUntil = 0;
+  if (!A.feed) return startAction(b);
+  A.inAct = true; try { act(b); } finally { A.inAct = false; }
+});
+applyTheme();
+window.kk = A;
+render(true);
+setInterval(() => { if (A.feed) render(false); }, 400);
+})();
+
+</script>
+</body>
+</html>
