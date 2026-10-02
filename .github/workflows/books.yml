@@ -1,0 +1,24 @@
+name: Build pitcher books
+on:
+  schedule:
+    - cron: "40 13 * * *"   # 9:40 a.m. Eastern every day
+    - cron: "40 17 * * *"   # 1:40 p.m. Eastern, after lineups and roster moves
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/build-books.mjs 144
+      - name: Commit books.json
+        run: |
+          git config user.name "kK books"
+          git config user.email "actions@users.noreply.github.com"
+          git add books.json
+          git diff --cached --quiet || git commit -m "Update pitcher books"
+          git push
