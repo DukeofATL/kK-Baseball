@@ -260,6 +260,19 @@ details.more summary { font-weight:600; color:var(--text); }
 .sheetin .pills button, .seg button { border:0; min-height:44px; background:transparent; }
 .sheetin .pills button.on, .seg button.on { background:var(--panel2); box-shadow:inset 0 0 0 2px var(--hi); color:var(--text); }
 .paceHero .muted { color:var(--muted); }
+/* v5: result card leads with what happened, then the verdict */
+.flash .outcome { font:800 26px/1.1 "Bricolage Grotesque", sans-serif; }
+.flash .verdict { font:800 19px/1.15 "Bricolage Grotesque", sans-serif; margin-top:2px; }
+.flash.good .verdict { color:var(--ok); }
+.flash.star { border-color:var(--hi); box-shadow:0 0 0 2px color-mix(in srgb, var(--hi) 35%, transparent); }
+.flash.star .verdict { color:var(--hi); }
+.starmark { display:inline-block; }
+.half { color:var(--muted); font-weight:800; }
+.bookline .today { margin-top:6px; }
+.cnt { white-space:nowrap; }
+.paceHero b { white-space:nowrap; }
+.paceHero.fin b { font-size:40px; }
+@media (max-width:380px) { .flash .outcome { font-size:22px; } .paceHero.fin b { font-size:32px; } }
 </style>
 </head>
 <body>
@@ -282,45 +295,74 @@ const KKE = (() => {
   const ADV = ["H-in","H-mid","H-away","M-in","M-mid","M-away","L-in","L-mid","L-away","C-high","C-low","C-in","C-away"];
   const ADV_NAME = { "H-in":"High in", "H-mid":"High middle", "H-away":"High away", "M-in":"Middle in", "M-mid":"Middle", "M-away":"Middle away",
     "L-in":"Low in", "L-mid":"Low middle", "L-away":"Low away", "C-high":"Chase high", "C-low":"Chase low", "C-in":"Chase in", "C-away":"Chase away" };
+  // Labels that describe the same pitch to a fan are merged, so a pitcher never shows two curveball buttons.
+  const NORM = { FO:"FS", KC:"CU", CS:"CU" };
+  const norm = t => NORM[t] || t;
   const fam = t => FAMILY[t] || null;
   const HALF_PLATE = 0.83; // feet: half of 17 inches plus the ball's radius
 
   // ---------- location ----------
   // Where a pitch crossed, relative to the hitter. Returns { base, adv } or null.
+  const BALL_R = 0.12, NEAR = 0.25; // feet
+  // Where a pitch crossed, relative to the hitter. Returns { base, adv, alt, near, mid } or null.
+  // alt: a second equally fair answer for corner pitches. near: cells across the zone edge within 3 inches. mid: belt high.
   function spotOf(pd, hand){
     if (!pd) return null;
     const c = pd.coordinates || {}, top = pd.strikeZoneTop, bot = pd.strikeZoneBottom;
     if (c.pX != null && c.pZ != null && top && bot) {
-      const x = c.pX, z = c.pZ;
-      const inside = hand === "L" ? x > 0 : x < 0;
-      const dz = z > top ? z - top : z < bot ? bot - z : 0;
+      const x = c.pX, z = c.pZ, T = top + BALL_R, B = bot - BALL_R;
+      const inside = hand === "L" ? x > 0 : x < 0, sideCell = inside ? "C-in" : "C-away";
+      const dz = z > T ? z - T : z < B ? B - z : 0;
       const dx = Math.max(0, Math.abs(x) - HALF_PLATE);
-      const mid = (top + bot) / 2;
+      const mid = (top + bot) / 2, ax = Math.abs(x);
+      const colOf = () => ax <= HALF_PLATE/3 ? "mid" : inside ? "in" : "away";
+      const rowOf = () => z > bot + (top-bot)*2/3 ? "H" : z < bot + (top-bot)/3 ? "L" : "M";
       if (dz === 0 && dx === 0) {
-        const row = z > bot + (top-bot)*2/3 ? "H" : z < bot + (top-bot)/3 ? "L" : "M";
-        const col = Math.abs(x) <= HALF_PLATE/3 ? "mid" : inside ? "in" : "away";
-        return { base: z >= mid ? "up" : "down", adv: row + "-" + col };
+        const near = [];
+        if (T - z < NEAR) near.push("C-high"); if (z - B < NEAR) near.push("C-low");
+        if (HALF_PLATE - ax < NEAR) near.push(sideCell);
+        const row = rowOf();
+        return { base: z >= mid ? "up" : "down", adv: row + "-" + colOf(), alt:null, near, mid: row === "M" };
       }
-      if (dx > dz) return { base:"off", adv: inside ? "C-in" : "C-away" };
-      return { base: z >= mid ? "up" : "down", adv: z > top ? "C-high" : "C-low" };
+      const vert = z > T ? "C-high" : z < B ? "C-low" : null;
+      const vBase = z >= mid ? "up" : "down";
+      if (dz > 0 && dx > 0) {
+        // Low and wide, or high and wide: either call is fair.
+        const primary = dx > dz ? { base:"off", adv:sideCell } : { base:vBase, adv:vert };
+        const alt = dx > dz ? { base:vBase, adv:vert } : { base:"off", adv:sideCell };
+        return Object.assign(primary, { alt, near:[], mid:false });
+      }
+      if (dx > 0) {
+        const near = dx < NEAR ? [rowOf() + "-" + (inside ? "in" : "away")] : [];
+        return { base:"off", adv:sideCell, alt:null, near, mid:false };
+      }
+      const near = dz < NEAR ? [(vert === "C-high" ? "H" : "L") + "-" + colOf()] : [];
+      return { base:vBase, adv:vert, alt:null, near, mid:false };
     }
     // Fallback to the Gameday zone number (catcher's view).
     const zn = pd.zone; if (zn == null) return null;
-    if (zn >= 11) return { base: zn <= 12 ? "up" : "down", adv: zn <= 12 ? "C-high" : "C-low" };
+    if (zn >= 11) return { base: zn <= 12 ? "up" : "down", adv: zn <= 12 ? "C-high" : "C-low", alt:null, near:[], mid:false };
     if (zn < 1 || zn > 9) return null;
     const r = Math.floor((zn-1)/3), cc = (zn-1)%3;
     const leftIsInside = hand !== "L"; // a right-handed hitter stands on the catcher's left
     const col = cc === 1 ? "mid" : (cc === 0) === leftIsInside ? "in" : "away";
-    return { base: r === 2 ? "down" : "up", adv: ["H","M","L"][r] + "-" + col };
+    return { base: r === 2 ? "down" : "up", adv: ["H","M","L"][r] + "-" + col, alt:null, near:[], mid: r === 1 };
   }
-  function advPartial(call, actual){
-    if (!call || !actual) return 0;
-    if (call === actual) return 1;
-    const [cr, cc] = call.split("-"), [ar, ac] = actual.split("-");
-    // Half credit for the right row or column inside the zone. Chase cells must be exact.
-    if (cr !== "C" && ar !== "C") return (cr === ar || cc === ac) ? 0.5 : 0;
+  function advCredit(call, sp){
+    if (!call || !sp) return 0;
+    if (call === sp.adv || (sp.alt && call === sp.alt.adv)) return 1;
+    const [cr, cc] = call.split("-"), [ar, ac] = sp.adv.split("-");
+    if (cr !== "C" && ar !== "C" && (cr === ar || cc === ac)) return 0.5; // right row or column inside the zone
+    if (sp.near && sp.near.includes(call)) return 0.5;                     // a borderline pitch, within 3 inches of the call
     return 0;
   }
+  function baseCredit(call, sp){
+    if (!call || !sp) return 0;
+    if (call === sp.base || (sp.alt && call === sp.alt.base)) return 1;
+    if (sp.mid && (call === "up" || call === "down")) return 0.5;           // belt high counts half either way
+    return 0;
+  }
+  function advPartial(call, actual){ return advCredit(call, { adv: actual, alt:null, near:[] }); }
 
   // ---------- counts ----------
   function bucket(balls, strikes){
@@ -334,21 +376,29 @@ const KKE = (() => {
   const BUCKET_NAME = { first:"on the first pitch", ahead:"at 0-1", even:"in even counts", behind:"in hitter's counts", two:"with two strikes", full:"at 3-2" };
 
   // ---------- book ----------
-  function emptyCell(){ return { n:0, type:{}, fam:{}, base:{}, adv:{} }; }
+  function emptyCell(){ return { n:0, type:{}, fam:{}, base:{}, adv:{}, pb:{}, pa:{} }; }
   function newBook(id, name){ return { id, name, n:0, cells:{}, fps:{n:0,s:0}, velo:{}, games:0 }; }
   function bookAdd(book, hand, bkt, type, spot, speed){
+    type = norm(type);
     const f = fam(type); if (!f) return;
     for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) {
       const c = book.cells[key] || (book.cells[key] = emptyCell());
       c.n++; c.type[type]=(c.type[type]||0)+1; c.fam[f]=(c.fam[f]||0)+1;
-      if (spot) { c.base[spot.base]=(c.base[spot.base]||0)+1; c.adv[spot.adv]=(c.adv[spot.adv]||0)+1; }
+      if (spot) {
+        c.base[spot.base]=(c.base[spot.base]||0)+1; c.adv[spot.adv]=(c.adv[spot.adv]||0)+1;
+        // Where each pitch goes, so the book's spot always fits the pitch it calls.
+        const pb = c.pb || (c.pb = {}), pa = c.pa || (c.pa = {});
+        const B1 = pb[f] || (pb[f] = {}), A1 = pa[type] || (pa[type] = {});
+        B1[spot.base] = (B1[spot.base]||0) + 1; A1[spot.adv] = (A1[spot.adv]||0) + 1;
+      }
     }
     if (speed) { const v = book.velo[type] || (book.velo[type] = { s:0, n:0 }); v.s += speed; v.n++; }
     book.n++;
   }
   function bookCell(book, hand, bkt){
     if (!book) return null;
-    for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) { const c = book.cells[key]; if (c && c.n >= 15) return { cell:c, key }; }
+    // The count matters more than the hitter's side, so a thin cell falls back to the same count first.
+    for (const key of [hand+"|"+bkt, "*|"+bkt, hand+"|*", "*|*"]) { const c = book.cells[key]; if (c && c.n >= 15) return { cell:c, key }; }
     const c = book.cells["*|*"]; return c && c.n ? { cell:c, key:"*|*" } : null;
   }
   // A league-style stand-in for pitchers with no book yet.
@@ -372,7 +422,8 @@ const KKE = (() => {
   const AREA = { "C-high":3, "C-low":3, "C-in":3, "C-away":3 };
   function arsenal(book){
     const c = book && book.cells["*|*"]; if (!c || !c.n) return ["FF","SL","CH","CU"];
-    return Object.keys(c.type).filter(t => c.type[t]/c.n >= 0.03).sort((a,b)=>c.type[b]-c.type[a]);
+    const merged = {}; for (const t in c.type) merged[norm(t)] = (merged[norm(t)]||0) + c.type[t];
+    return Object.keys(merged).filter(t => merged[t]/c.n >= 0.05).sort((a,b)=>merged[b]-merged[a]);
   }
   function mixLine(book, hand, bkt, level){
     const bc = bookCell(book, hand, bkt); if (!bc) return { pitch:[], spot:[], key:null, n:0 };
@@ -383,7 +434,12 @@ const KKE = (() => {
     const bc = bookCell(book, hand, bkt);
     if (!bc) return level === "advanced" ? { pitch:"FF", spot:"H-away" } : { pitch:"fastball", spot:"up" };
     const c = bc.cell;
-    return level === "advanced" ? { pitch: argmax(c.type) || "FF", spot: argmax(c.adv, AREA) || "M-away" } : { pitch: argmax(c.fam) || "fastball", spot: argmax(c.base) || "up" };
+    if (level === "advanced") {
+      const pitch = argmax(c.type) || "FF", given = c.pa && c.pa[pitch];
+      return { pitch, spot: argmax(given && Object.keys(given).length ? given : c.adv, AREA) || "M-away" };
+    }
+    const pitch = argmax(c.fam) || "fastball", given = c.pb && c.pb[pitch];
+    return { pitch, spot: argmax(given && Object.keys(given).length ? given : c.base) || "up" };
   }
   function weights(book, hand, bkt, level, call){
     const bc = bookCell(book, hand, bkt);
@@ -393,15 +449,22 @@ const KKE = (() => {
     const ps = level === "advanced" ? prob(c.adv, call.spot, c.n, 13) : prob(c.base, call.spot, c.n, 3);
     return { wp: Math.min(5, 1/pp), ws: Math.min(5, 1/ps) };
   }
+  // The book's chance that the pitcher throws this pitch here, used to set the odds on a call.
+  function pitchProb(book, hand, bkt, level, pitch){
+    const bc = bookCell(book, hand, bkt); if (!bc) return level === "advanced" ? 0.25 : 1/3;
+    const c = bc.cell;
+    return level === "advanced" ? prob(c.type, norm(pitch), c.n, Math.max(3, Object.keys(c.type).length)) : prob(c.fam, pitch, c.n, 3);
+  }
   // Grade a call against the pitch. The glove answer never affects the grade.
   function grade(call, actual, level){
-    const pitchRight = level === "advanced" ? call.pitch === actual.type : call.pitch === fam(actual.type);
-    let spotCredit = 0;
-    if (actual.spot) spotCredit = level === "advanced" ? advPartial(call.spot, actual.spot.adv) : (call.spot === actual.spot.base ? 1 : 0);
-    return { pitchRight, spotCredit };
+    const at = norm(actual.type);
+    const pitchRight = level === "advanced" ? norm(call.pitch) === at : call.pitch === fam(at);
+    const pitchCredit = pitchRight ? 1 : (level === "advanced" && fam(norm(call.pitch)) === fam(at) ? 0.5 : 0);
+    const spotCredit = actual.spot ? (level === "advanced" ? advCredit(call.spot, actual.spot) : baseCredit(call.spot, actual.spot)) : 0;
+    return { pitchRight, pitchCredit, spotCredit };
   }
   function pointsFor(g, w, big){
-    let p = (g.pitchRight ? w.wp : 0) + g.spotCredit * w.ws;
+    let p = (g.pitchCredit != null ? g.pitchCredit : (g.pitchRight ? 1 : 0)) * w.wp + g.spotCredit * w.ws;
     if (g.pitchRight && g.spotCredit === 1) p += 1;
     return Math.round(p * (big ? 2 : 1) * 10) / 10;
   }
@@ -657,9 +720,13 @@ const KKE = (() => {
   }
 
   // ---------- the read: one factual sentence per plate appearance ----------
+  const lastOf = p => p.useLastName || p.lastName || p.boxscoreName || p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0];
   function nm(id, feed){
     const p = feed.gameData.players["ID"+id]; if (!p) return "He";
-    return p.useLastName || p.lastName || p.boxscoreName || p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0];
+    const ln = lastOf(p);
+    // Two players with the same last name (two Smiths) get first names too.
+    if (!feed._dupes) { const seen = {}; feed._dupes = {}; for (const k in feed.gameData.players) { const q = lastOf(feed.gameData.players[k]); if (seen[q]) feed._dupes[q] = true; seen[q] = true; } }
+    return feed._dupes[ln] ? p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"") : ln;
   }
   const tn = t => TYPE_NAME[t] || "pitch";
   function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
@@ -679,18 +746,21 @@ const KKE = (() => {
     const prevLastE = prev ? prev.pitches.filter(e => e.details.type).pop() : null;
     const echo = prevLastE ? (prevLastE.details.type.code === lt ? `, the same pitch that ended their matchup in the ${ordinal(prev.src.about.inning)}` : `, after a ${tn(prevLastE.details.type.code)} ended their matchup in the ${ordinal(prev.src.about.inning)}`) : "";
     const before = P.slice(0,-1);
-    const fbUp = before.filter(e => fam(e.details.type.code) === "fastball" && (spotOf(e.pitchData, hand)||{}).base === "up").length;
+    const fbUp = before.filter(e => { const sp = spotOf(e.pitchData, hand); return fam(e.details.type.code) === "fastball" && sp && (sp.adv[0] === "H" || sp.adv === "C-high"); }).length;
     const n = P.length, pitches = `${n} pitch${n===1?"":"es"}`;
+    const st = pitchStates(p).filter(x => x.e.details.type && x.e.details.type.code); const ls0 = st[st.length-1];
+    const on = ls0 ? ` on ${ls0.balls}-${ls0.strikes}` : "";
     const whiffedBefore = before.some(e => e.details.type.code === lt && (e.details.code === "S" || e.details.code === "W"));
     if (ev === "strikeout" || ev === "strikeout_double_play") {
       const how = last.details.code === "C" ? "caught him looking at" : "got him swinging at";
-      if (whiffedBefore) return `${pit} struck out ${bat} in ${pitches}. He ${how} a ${tn(lt)} ${lw}, the same pitch ${bat} had already swung through in the at-bat.`;
-      if (fbUp >= 2 && fam(lt) !== "fastball") return `${pit} showed ${bat} ${fbUp} fastballs up, then ${how} a ${tn(lt)} ${lw}${echo}.`;
-      return `${pit} struck out ${bat} in ${pitches}, and he ${how} a ${tn(lt)} ${lw}${echo}.`;
+      if (whiffedBefore) return `${pit} struck out ${bat} in ${pitches}. He ${how} a ${tn(lt)} ${lw}${on}, the same pitch ${bat} had already swung through in the at-bat.`;
+      if (fbUp >= 2 && fam(lt) !== "fastball") return `${pit} showed ${bat} ${fbUp} fastballs up, then ${how} a ${tn(lt)} ${lw}${on}${echo}.`;
+      return `${pit} struck out ${bat} in ${pitches}, and he ${how} a ${tn(lt)} ${lw}${on}${echo}.`;
     }
     if (ev === "walk") {
       const states = pitchStates(p), behind = states.find(x => x.balls - x.strikes >= 2), full = states.some(x => x.balls === 3 && x.strikes === 2);
       const zone = P.filter(e => { const sp = spotOf(e.pitchData, hand); return sp && sp.adv[0] !== "C"; }).length;
+      if (n === 4 && P.every(e => e.details.isBall)) return `${pit} walked ${bat} on four straight balls. Ball four was a ${tn(lt)} ${lw}.`;
       const lead = behind ? `fell behind ${behind.balls}-${behind.strikes} and ` : full ? "battled to a full count and " : "";
       const zoneTxt = zone === 0 ? "without one of them in the strike zone" : `with ${zone} of them in the strike zone`;
       return `${pit} ${lead}walked ${bat} on ${pitches}, ${zoneTxt}. Ball four was a ${tn(lt)} ${lw}.`;
@@ -700,15 +770,15 @@ const KKE = (() => {
     if (HITS.has(ev)) {
       const verb = { single:"singled", double:"doubled", triple:"tripled", home_run:"homered" }[ev];
       const sp = spotOf(last.pitchData, hand), centered = sp && ["M-mid","H-mid","M-in","M-away"].includes(sp.adv);
-      return `${bat} ${verb} on a ${tn(lt)} ${lw}${ls ? ` at ${Math.round(ls)} mph off the bat` : ""}${centered && ev !== "single" ? ", a pitch that caught a lot of the plate" : ""}${echo}.`;
+      return `${bat} ${verb} on a ${on ? on.trim().replace("on ", "") + " " : ""}${tn(lt)} ${lw}${ls ? ` at ${Math.round(ls)} mph off the bat` : ""}${centered && ev !== "single" ? ", a pitch that caught a lot of the plate" : ""}${echo}.`;
     }
-    if (ev === "sac_fly") return `${bat} drove a ${tn(lt)} ${lw} deep enough for a sacrifice fly.`;
-    if (ev === "grounded_into_double_play" || ev === "double_play") return `${pit} got a double play from ${bat} on a ${tn(lt)} ${lw}.`;
-    return `${pit} retired ${bat} on a ${tn(lt)} ${lw} after ${pitches}${ls && ls >= 100 ? `, though it left the bat at ${Math.round(ls)} mph` : ""}${echo}.`;
+    if (ev === "sac_fly") return `${bat} drove a ${tn(lt)} ${lw}${on} deep enough for a sacrifice fly.`;
+    if (ev === "grounded_into_double_play" || ev === "double_play") return `${pit} got a double play from ${bat} on a ${tn(lt)} ${lw}${on}.`;
+    return `${pit} retired ${bat} on a ${tn(lt)} ${lw}${on} after ${pitches}${ls && ls >= 100 ? `, though it left the bat at ${Math.round(ls)} mph` : ""}${echo}.`;
   }
 
-  return { SHORT, FAMILY, TYPE_NAME, FAM_NAME, LOC_NAME, LOC_WORDS, ADV, ADV_NAME, BUCKET_NAME, fam, spotOf, advPartial, bucket,
-    newBook, bookAdd, bookCell, bookCall, weights, grade, pointsFor, arsenal, mixLine, genericBook,
+  return { norm, advCredit, baseCredit, SHORT, FAMILY, TYPE_NAME, FAM_NAME, LOC_NAME, LOC_WORDS, ADV, ADV_NAME, BUCKET_NAME, fam, spotOf, advPartial, bucket,
+    newBook, bookAdd, bookCell, bookCall, weights, pitchProb, PHRASE, grade, pointsFor, arsenal, mixLine, genericBook,
     paProbs, simulate, halfInning, rng, pyth, pythPregame, regressERA, shiftWP, logit, sigm,
     view, stateOf, pitchStates, lastCount, completedHalves, goAhead, syncOffset, basesBefore, basesAfter,
     gameStats, keyCatalog, gradeKey, sentence, ordinal, ON_BASE, tn, nm };
@@ -1061,7 +1131,8 @@ async function startLive(pk){
   feed.gamePk = pk;
   A.feed = feed; A.src = { kind:"live" };
   loadRec();
-  A.src.clock = { paused:false, now(){ return Date.now() - (A.rec.offset != null ? A.rec.offset : 45000); } };
+  // The screen runs 1.5 seconds behind the TV so a result never shows before the fan sees the pitch. Calls are stamped on the synced clock.
+  A.src.clock = { paused:false, lockNow(){ return Date.now() - (A.rec.offset != null ? A.rec.offset : 45000); }, now(){ return this.lockNow() - REVEAL_DELAY; } };
   await loadContext(); afterLoad(); keepAwake(); pollLive();
 }
 async function pollLive(){
@@ -1122,7 +1193,7 @@ const PBP = new Map();
 function pbpOnce(pk){ if (!PBP.has(pk)) PBP.set(pk, j(`/api/v1/game/${pk}/playByPlay`).catch(e => { PBP.delete(pk); throw e; })); return PBP.get(pk); }
 async function buildBook(pid){
   const season = seasonOf(), before = (A.feed.gameData.datetime.dateTime||"").slice(0,10);
-  const ck = `kk-book2-${pid}-${season}-${before}`;
+  const ck = `kk-book3-${pid}-${season}-${before}`;
   const cached = S.get(ck, null);
   if (cached) { A.books[pid] = cached; A.bookStatus[pid] = "ready"; render(true); return; }
   A.bookStatus[pid] = "building";
@@ -1153,7 +1224,9 @@ async function buildBook(pid){
 }
 
 // ---------- derived game facts ----------
+const REVEAL_DELAY = 1500;
 const now = () => A.src.clock.now();
+const lockNow = () => A.src.clock.lockNow ? A.src.clock.lockNow() : now();
 function sides(){ const g = A.feed.gameData.teams, my = g.home.id === settings.team ? "home" : "away"; return { my, opp: my === "home" ? "away" : "home", away:g.away, home:g.home }; }
 function abbr(side){ const t = A.feed.gameData.teams[side]; return t.abbreviation || t.teamName || t.name; }
 function teamWord(side){ const t = A.feed.gameData.teams[side]; return t.teamName || t.name; }
@@ -1297,11 +1370,14 @@ function demoSwingsForHalf(plays, half, final){
 }
 
 // ---------- call windows ----------
-// Windows open on two-strike pitches, with runners in scoring position from the sixth on, and in big spots late.
+// Windows open on two-strike pitches, on every 3-2 pitch, with runners in scoring position from the sixth on, and in big spots late.
+// Your own starter also gets a 1-1 window the first time he sees each hitter. Blowouts go quiet from the seventh on.
 // By default the fan gets at most two windows per at-bat unless they open the whole at-bat.
 function eligibleReasons(b, s, ctx){
   const r = [];
-  if (s === 2) r.push("Two strikes");
+  if (b === 3 && s === 2) r.push("Full count");
+  else if (s === 2) r.push("Two strikes");
+  if (b === 1 && s === 1 && ctx.firstLook) r.push("1-1 on his first look");
   if (ctx.inning >= 6 && (ctx.bases & 6)) r.push("Runner in scoring position");
   if (ctx.big) r.push("Big spot");
   return r;
@@ -1310,20 +1386,27 @@ function windowInfo(plays, st){
   if (!st.cur || st.cur.complete) return null;
   const p = st.cur.src, sd = sides(), ab = p.about.atBatIndex;
   const def = p.about.halfInning === "top" ? "home" : "away";
-  if (settings.seat === "mine" && def !== sd.my) return { seatOff:true, ab };
-  if (A.src.kind === "live" && (A.rec.offset == null || !A.rec.verified)) return { needSync:true, ab };
   const runners = [1,2,4].filter(b => st.bases & b).length;
   const batScore = p.about.halfInning === "top" ? st.away : st.home, fieldScore = p.about.halfInning === "top" ? st.home : st.away, d = fieldScore - batScore;
-  const ctx = { inning: p.about.inning, bases: st.bases, big: p.about.inning >= 7 && d >= 0 && d <= 2 && runners >= Math.max(1, d) };
+  const pid = p.matchup.pitcher.id, bid = p.matchup.batter.id;
+  const firstLook = def === sd.my && pid === starters()[def] && !plays.some(v => v !== st.cur && v.src.matchup.batter.id === bid && v.src.matchup.pitcher.id === pid);
+  const ctx = { inning: p.about.inning, bases: st.bases, big: p.about.inning >= 7 && d >= 0 && d <= 2 && runners >= Math.max(1, d), firstLook };
+  const userOpen = A.rec.openAB === ab;
+  // With your own pitchers only, the other side's biggest pitches still open: two strikes with runners in scoring position, and big spots late.
+  const crossSeat = (st.strikes === 2 && (st.bases & 6) > 0) || ctx.big;
+  if (settings.seat === "mine" && def !== sd.my && !crossSeat && !userOpen) return { seatOff:true, ab };
+  if (A.src.kind === "live" && (A.rec.offset == null || !A.rec.verified)) return { needSync:true, ab };
+  const blowout = p.about.inning >= 7 && Math.abs(st.away - st.home) >= 6;
   const seen = E.pitchStates(p).filter(ps => st.cur.pitches.includes(ps.e));
   // Two-strike pitches keep their own two windows, so an early window late in the game never uses them up.
-  const earlyOpened = seen.filter(ps => ps.strikes < 2 && eligibleReasons(ps.balls, ps.strikes, ctx).length).length;
+  const earlyOpened = seen.filter(ps => ps.strikes < 2 && !(ps.balls === 1 && ps.strikes === 1 && ctx.firstLook) && eligibleReasons(ps.balls, ps.strikes, ctx).length).length;
   const twoOpened = seen.filter(ps => ps.strikes === 2).length;
   const reasons = eligibleReasons(st.balls, st.strikes, ctx);
-  const userOpen = A.rec.openAB === ab;
-  const open = userOpen || (st.strikes === 2 ? (settings.allTwo || twoOpened < 2) : (reasons.length > 0 && earlyOpened < 1));
-  return { open, reasons: userOpen ? ["Your at-bat"].concat(reasons) : reasons, ab, pn: st.cur.pitches.length + 1,
-    big: (st.strikes === 2 && (st.bases & 6) > 0) || ctx.big };
+  const full = st.balls === 3 && st.strikes === 2;
+  const auto = full || (st.strikes === 2 ? (settings.allTwo || twoOpened < 2) : (st.balls === 1 && st.strikes === 1 && ctx.firstLook) || (reasons.length > 0 && earlyOpened < 1));
+  const open = userOpen || (!blowout && auto);
+  return { open, quiet: blowout && auto && !userOpen, reasons: userOpen ? ["Your at-bat"].concat(reasons) : reasons, ab, pn: st.cur.pitches.length + 1,
+    big: (st.strikes === 2 && (st.bases & 6) > 0) || ctx.big, cross: def !== sd.my && settings.seat === "mine" };
 }
 function callContext(st, plays){
   const p = st.cur.src;
@@ -1334,11 +1417,12 @@ function lockCall(){
   const plays = E.view(A.feed, now()), st = E.stateOf(plays), w = windowInfo(plays, st);
   if (!w || !w.open || w.ab !== d.ab || w.pn !== d.pn) return;
   const c = callContext(st, plays), level = settings.level;
-  const call = { ab:w.ab, pn:w.pn, pitch:d.pitch, spot:d.spot, lockT: now(), level, hand:c.hand, bkt:c.bkt, big:w.big, pitcherId:c.pitcherId, batter:c.batter, count:c.count, inning:c.inning, bookKind: c.book.generic ? "league" : c.book.today ? "today" : "season" };
+  const call = { ab:w.ab, pn:w.pn, pitch:d.pitch, spot:d.spot, lockT: lockNow(), level, hand:c.hand, bkt:c.bkt, big:w.big, pitcherId:c.pitcherId, batter:c.batter, count:c.count, inning:c.inning, bookKind: c.book.generic ? "league" : c.book.today ? "today" : "season" };
   call.bookCall = E.bookCall(c.book, c.hand, c.bkt, level);
   call.w = E.weights(c.book, c.hand, c.bkt, level, call);
   call.bw = E.weights(c.book, c.hand, c.bkt, level, call.bookCall);
   call.against = call.pitch !== call.bookCall.pitch;
+  call.callProb = E.pitchProb(c.book, c.hand, c.bkt, level, call.pitch);
   if (A.chip) { const gc = A.rec.calls.find(x => x.ab === A.chip.ab && x.pn === A.chip.pn); if (gc && !gc.glove) gc.glove = { answer:"timeout" }; A.chip = null; }
   const mix0 = E.mixLine(c.book, c.hand, c.bkt, level).pitch.find(x => x.k === call.bookCall.pitch); call.bookPct = mix0 ? mix0.pct : null;
   A.rec.calls = A.rec.calls.filter(x => !(x.ab === call.ab && x.pn === call.pn));
@@ -1373,11 +1457,13 @@ function summary(calls){
   return { n: g.length, you: g.filter(c=>c.g.pitchRight).length, book: g.filter(c=>c.bg.pitchRight).length,
     spot: g.filter(c=>c.g.spotCredit===1).length, bspot: g.filter(c=>c.bg.spotCredit===1).length, both: g.filter(c=>c.g.pitchRight && c.g.spotCredit===1).length,
     against: ag.length, againstYou: ag.filter(c=>c.g.pitchRight).length, againstBook: ag.filter(c=>c.bg.pitchRight).length,
+    exp: Math.round(10 * ag.reduce((a,c) => a + (c.callProb != null ? c.callProb : 1 / c.w.wp), 0)) / 10,
     pts: g.reduce((a,c)=>a+c.pts,0), bpts: g.reduce((a,c)=>a+c.bpts,0) };
 }
 
 // ---------- glove ----------
-function answerGlove(ans){
+function answerGlove(ans, ab, pn){
+  if (ab != null) { const c = A.rec.calls.find(x => x.ab === ab && x.pn === pn); if (c) { c.glove = { answer: ans }; delete c.gloveDeferred; } saveRec(); render(true); return; }
   const c = A.rec.calls.find(x => A.chip && x.ab === A.chip.ab && x.pn === A.chip.pn);
   if (c) c.glove = { answer: ans };
   A.chip = null; saveRec(); render(true);
@@ -1427,13 +1513,38 @@ function finalize(plays){
   const sd = sides(), lp = plays[plays.length-1].src;
   const my = sd.my === "away" ? lp.result.awayScore : lp.result.homeScore, op = sd.my === "away" ? lp.result.homeScore : lp.result.awayScore;
   const won = my > op, keys = gradeKeys(plays, "final");
-  const consistent = keys.filter(k => k.hit === won).sort((a,b) => Math.abs(b.z) - Math.abs(a.z));
+  // The deciding key is the one whose plays moved the win chance most toward the result, and margin breaks a tie.
+  const imp = keyImpacts(plays, won);
+  const consistent = keys.filter(k => k.hit === won).map(k => Object.assign({ imp: (imp[k.id]||0) >= 2 ? imp[k.id] : 0 }, k)).sort((a,b) => (b.imp - a.imp) || Math.abs(b.z) - Math.abs(a.z));
   const ga = E.goAhead(plays);
   let dec = null;
   if (ga) { const sw = abSwings(plays).find(s => s.ab === ga.src.about.atBatIndex); dec = { ab: ga.src.about.atBatIndex, text: abText(ga), d: sw ? Math.round(Math.abs(sw.d)) : null }; }
-  A.rec.final = { my, op, won, keys, deciding: consistent[0] ? consistent[0].id : null, decidingAB: dec, line: summary(A.rec.calls) };
+  A.rec.final = { my, op, won, keys, deciding: consistent[0] ? consistent[0].id : null, decidingImp: consistent[0] ? Math.round(consistent[0].imp) : 0, decidingAB: dec, line: summary(A.rec.calls) };
   A.chip = null; A.toast = null;
   saveRec(); saveSeason(plays);
+}
+// Win-chance points each key's plays moved toward the final result.
+function keyImpacts(plays, won){
+  const sd = sides(), stp = starters(), top3 = (A.feed.liveData.boxscore.teams[sd.opp].battingOrder || []).slice(0,3);
+  const sw = {}; for (const x of abSwings(plays)) sw[x.ab] = x.d * (won ? 1 : -1);
+  const out = { pitches:0, starter:0, fps:0, xbh:0, top3:0, walks:0 };
+  const XBH = ["double","triple","home_run"], BB = ["walk","intent_walk","hit_by_pitch"];
+  for (const v of plays) {
+    if (!v.complete) continue;
+    const p = v.src, d = sw[p.about.atBatIndex]; if (d == null) continue;
+    const mine = (p.about.halfInning === "top" ? "away" : "home") === sd.my, ev = p.result.eventType, pid = p.matchup.pitcher.id;
+    if (mine) {
+      if (won ? v.pitches.length >= 5 : v.pitches.length <= 3) out.pitches += d;
+      if (pid === stp[sd.opp] && v.pitches.length) { const f = v.pitches[0].details, strike = f.isStrike || f.isInPlay; if (won ? !strike : strike) out.fps += d; }
+      if (won && XBH.includes(ev)) out.xbh += d;
+      if (won && BB.includes(ev)) out.walks += d;
+    } else {
+      if (won ? pid === stp[sd.my] : pid !== stp[sd.my]) out.starter += d;
+      if (top3.includes(p.matchup.batter.id)) out.top3 += d;
+      if (!won && BB.includes(ev)) out.walks += d;
+    }
+  }
+  return out;
 }
 function abText(v){
   const p = v.src, inn = `${p.about.halfInning === "top" ? "top" : "bottom"} of the ${E.ordinal(p.about.inning)}`;
@@ -1441,19 +1552,23 @@ function abText(v){
   return `${desc}, in the ${inn}`;
 }
 function bestRead(calls){
-  const g = calls.filter(c => c.g && !c.void && c.against && c.g.pitchRight).sort((a,b) => ((b.big?1:0) - (a.big?1:0)) || (b.pts - a.pts));
+  // Calls that ended the at-bat come first, then big spots, then the longest odds.
+  const ended = c => { const p = A.feed.liveData.plays.allPlays.find(x => x.about.atBatIndex === c.ab); return p && p.about.isComplete && (p.playEvents||[]).filter(e => e.isPitch).length === c.pn ? 1 : 0; };
+  const g = calls.filter(c => c.g && !c.void && c.against && c.g.pitchRight).sort((a,b) => (ended(b) - ended(a)) || ((b.big?1:0) - (a.big?1:0)) || (b.pts - a.pts));
   const c = g[0]; if (!c) return null;
-  const word = (k, lv) => lv === "advanced" ? E.tn(k) : k === "offspeed" ? "offspeed pitch" : E.FAM_NAME[k].toLowerCase();
+  const word = (k, lv) => lv === "advanced" ? E.tn(k) : k === "offspeed" ? "offspeed" : E.FAM_NAME[k].toLowerCase();
   return `calling ${pl(c.pitcherId).fullName}'s ${word(c.pitch, c.level)} on ${c.count} to ${pl(c.batter).fullName} in the ${E.ordinal(c.inning)}, when the book said ${word(c.bookCall.pitch, c.level)}`;
 }
 function shareText(){
   const f = A.rec.final, sd = sides(), L = f.line, best = bestRead(A.rec.calls);
   let t = `kK: ${abbr(sd.my)} ${f.my}, ${abbr(sd.opp)} ${f.op}.`;
   if (best) t += ` My best read was ${best}.`;
-  if (L.against) t += ` I went against the book ${plural(L.against,"time")} and was right ${plural(L.againstYou,"time")}, and the book was right ${plural(L.againstBook,"time")}.`;
+  if (L.against) t += ` I went against the book ${plural(L.against,"time")} and was right ${plural(L.againstYou,"time")}, when the pitchers' habits said about ${(L.exp||0).toFixed(1).replace(/\.0$/,"")}.`;
   else if (L.n) t += ` I called ${plural(L.n,"pitch","pitches")} and got ${L.you} right.`;
-  const g = A.rec.calls.filter(c => c.g && !c.void);
-  const grid = g.map(c => c.against && c.g.pitchRight && !c.bg.pitchRight ? "⭐" : c.g.pitchRight ? "🟩" : "⬜").join("");
+  const g = A.rec.calls.filter(c => c.g && !c.void).sort((a,b) => a.ab - b.ab || a.pn - b.pn), rows = [];
+  for (const c of g) { const r = rows[rows.length-1], mk = c.against && c.g.pitchRight && !c.bg.pitchRight ? "⭐" : c.g.pitchRight ? "🟩" : "⬜";
+    if (r && r.inning === c.inning) r.marks += mk; else rows.push({ inning:c.inning, marks:mk }); }
+  const grid = rows.map(r => `${r.inning}: ${r.marks}`).join("\n");
   if (grid) t += "\n" + grid + (grid.includes("⭐") ? "\n⭐ beat the book" : "");
   if (/^https?:/.test(location.href)) t += "\n" + location.href.split("#")[0];
   return t;
@@ -1544,18 +1659,20 @@ function render(force){
   if (A.standings) processHalves(plays, over);
   gradeCalls(plays);
   // A called pitch the fan has now seen: show the result at once, and ask about the glove.
+  // When the next pitch already has a window open, the glove question waits for the read after the at-bat.
+  const deciding = w0 => w0 && w0.open && !A.rec.calls.some(c => c.ab === w0.ab && c.pn === w0.pn);
+  const wNow = !over ? windowInfo(plays, st) : null;
   for (const c of A.rec.calls) {
     if (c.seen) continue;
     const v = plays.find(x => x.src.about.atBatIndex === c.ab); if (!v || v.pitches.length < c.pn) continue;
     c.seen = true; const e = v.pitches[c.pn-1];
     if (c.lockT < Date.parse(e.startTime)) {
       A.flash = { ab:c.ab, pn:c.pn, until: Date.now() + 20000 };
-      if (settings.glove && !over) A.chip = { ab:c.ab, pn:c.pn, until: Date.now() + 6000 };
+      if (settings.glove && !over) { if (deciding(wNow)) c.gloveDeferred = true; else A.chip = { ab:c.ab, pn:c.pn, until: Date.now() + 6000 }; }
+      if (navigator.vibrate && e.details.type) try { const a = actualOf(e, c.hand), g = E.grade(c, a, c.level), bg = E.grade({ pitch:c.bookCall.pitch, spot:c.bookCall.spot }, a, c.level); if (c.against && g.pitchRight && !bg.pitchRight) navigator.vibrate([30,40,30]); } catch(err){}
     }
     saveRec();
   }
-  const deciding = w0 => w0 && w0.open && !A.rec.calls.some(c => c.ab === w0.ab && c.pn === w0.pn);
-  const wNow = !over ? windowInfo(plays, st) : null;
   if (A.chip && deciding(wNow)) { A.chip.until = Math.max(A.chip.until, Date.now() + 1500); if (A.flash) A.flash.until = Math.max(A.flash.until, Date.now() + 2000); }
   if (A.chip && Date.now() > A.chip.until) { const c = A.rec.calls.find(x => x.ab === A.chip.ab && x.pn === A.chip.pn); if (c && !c.glove) { c.glove = { answer:"timeout" }; saveRec(); } A.chip = null; }
   if (over) finalize(plays);
@@ -1633,7 +1750,7 @@ function gameTab(plays, st, over, w){
 }
 function bookStatusText(id){
   const s = A.bookStatus[id], b = A.books[id];
-  if (s === "ready") return `His book: ${b.n.toLocaleString()} pitches from ${plural(b.games,"game")} this season.`;
+  if (s === "ready") return `His book: ${b.n.toLocaleString()} pitches from his last ${plural(b.games,"game")}.`;
   if (s === "building" || s === "queued") return "Building his book from this season's pitches.";
   if (s === "error" || s === "empty") return "No season book, so kK will use what he throws today.";
   return "";
@@ -1650,7 +1767,7 @@ function pregameCard(){
 }
 function howTo(){
   return `<section class="card how"><h3>How to play</h3>
-    <p><b>Call the pitch.</b> When a call window opens, call the next pitch before it is thrown: the kind of pitch first, then where it will cross the plate. Windows open with two strikes, with runners in scoring position from the sixth inning on, and in big spots late. You can also open any at-bat yourself.</p>
+    <p><b>Call the pitch.</b> When a call window opens, call the next pitch before it is thrown: the kind of pitch first, then where it will cross the plate. Windows open with two strikes, on every 3-2 pitch, with runners in scoring position from the sixth inning on, and in big spots late. Your starter also gets a 1-1 window the first time he sees each hitter. Windows go quiet in a blowout, and you can open any at-bat yourself.</p>
     <p><b>Beat the book.</b> The book is the pitcher's own habits this season for this count and this kind of hitter. It makes its own call on every pitch you call. Agreeing with it is fine, but the real test is going against it and being right.</p>
     <p><b>Chart the glove.</b> After each pitch you call, tell kK whether it hit the catcher's glove. That builds each pitcher's command chart and never changes your score.</p></section>`;
 }
@@ -1658,7 +1775,25 @@ function famName(k){ return E.FAM_NAME[k] || k; }
 function pitchName(k, level){ return level === "advanced" ? (E.SHORT[k] || k) : famName(k); }
 function spotName(k, level){ return level === "advanced" ? E.ADV_NAME[k] : E.LOC_NAME[k]; }
 function callLabel(c){ return `${pitchName(c.pitch, c.level).toLowerCase()}, ${spotName(c.spot, c.level).toLowerCase()}`; }
-function bookLine(c, level){
+// Today: what he has thrown in this count so far, and how he finished this hitter last time.
+function todayLine(c, level, plays){
+  const tally = {}; let n = 0;
+  for (const v of plays) if (v.src.matchup.pitcher.id === c.pitcherId) for (const ps of E.pitchStates(v.src)) {
+    if (!v.pitches.includes(ps.e) || !ps.e.details.type || E.bucket(ps.balls, ps.strikes) !== c.bkt) continue;
+    const t = E.norm(ps.e.details.type.code), k = level === "advanced" ? t : E.fam(t); if (!k) continue;
+    tally[k] = (tally[k] || 0) + 1; n++;
+  }
+  const word = (k, m) => level === "advanced" ? E.tn(k) + (m === 1 ? "" : "s") : k === "offspeed" ? (m === 1 ? "offspeed pitch" : "offspeed pitches") : E.FAM_NAME[k].toLowerCase() + (m === 1 ? "" : "s");
+  const parts = [];
+  if (n >= 2) parts.push(`Today ${E.BUCKET_NAME[c.bkt]}: ` + Object.keys(tally).sort((a,b) => tally[b] - tally[a]).map(k => `${tally[k]} ${word(k, tally[k])}`).join(", ") + ".");
+  const prev = plays.filter(v => v.complete && v.src.matchup.batter.id === c.batter && v.src.matchup.pitcher.id === c.pitcherId && v.pitches.some(e => e.details.type)).pop();
+  if (prev) {
+    const le = prev.pitches.filter(e => e.details.type).pop(), sp = E.spotOf(le.pitchData, c.hand);
+    parts.push(`Last time he finished ${last(c.batter)} with a ${E.tn(le.details.type.code)}${sp ? " " + E.PHRASE[sp.adv] : ""}, and it ended in a ${String(prev.src.result.event || "play").toLowerCase()}.`);
+  }
+  return parts.length ? `<div class="foot today">${esc(parts.join(" "))}</div>` : "";
+}
+function bookLine(c, level, plays){
   const m = E.mixLine(c.book, c.hand, c.bkt, level);
   if (!m.pitch.length) return "";
   const who = c.book.generic ? "A typical pitcher" : last(c.pitcherId);
@@ -1666,7 +1801,7 @@ function bookLine(c, level){
   const cnt = m.key.endsWith("*") ? "" : ` ${E.BUCKET_NAME[c.bkt]}`;
   const src = c.book.generic ? " (no book yet)" : c.book.today ? " (today only)" : "";
   const row = (label, xs, nameFn) => `<div class="mixrow"><span class="ml">${label}</span>${xs.map(x => `<span class="mx"><b>${x.pct}%</b>${esc(nameFn(x.k, level))}</span>`).join("")}</div>`;
-  return `<div class="bookline"><div class="foot"><b class="bk">The book${esc(src)}:</b> ${esc(who + scope + cnt)}</div>${row("Pitch", m.pitch, pitchName)}${row("Spot", m.spot, spotName)}</div>`;
+  return `<div class="bookline"><div class="foot"><b class="bk">The book${esc(src)}:</b> ${esc(who + scope + cnt)}</div>${row("Pitch", m.pitch, pitchName)}${row("Spot", m.spot, spotName)}${plays ? todayLine(c, level, plays) : ""}</div>`;
 }
 function callPanel(plays, st, w){
   if (!w) return `<section class="card quiet"><p>${st.cur && st.cur.complete ? "Waiting on the next hitter." : "Waiting on the next pitch."}</p></section>`;
@@ -1675,7 +1810,7 @@ function callPanel(plays, st, w){
   if (w.needSync) return `<section class="card quiet"><div class="k">${who}</div><p><b>Sync to start calling.</b> Tap Pitch at the top the moment you see the release, on three pitches in a row. Calls open once kK knows how far behind your TV runs, so nobody can call a pitch they already saw.</p></section>`;
   if (w.seatOff) return `<section class="card quiet"><div class="k">${who}</div><p>The ${esc(teamWord(sd.my))} are hitting. You call your own pitchers' pitches, so enjoy the at-bat, or switch to both teams in Settings.</p></section>`;
   const existing = A.rec.calls.find(c => c.ab === w.ab && c.pn === w.pn);
-  if (!w.open) return `<section class="card quiet"><div class="k">${who}</div><p>No call window on this pitch.</p><button class="ghost" data-act="openab" data-ab="${w.ab}">Call every pitch of this at-bat</button></section>`;
+  if (!w.open) return `<section class="card quiet"><div class="k">${who}</div><p>${w.quiet ? "This one is a blowout, so call windows stay quiet from here." : "No call window on this pitch."}</p><button class="ghost" data-act="openab" data-ab="${w.ab}">Call every pitch of this at-bat</button></section>`;
   const level = settings.level, c = callContext(st, plays);
   if (!A.draft || A.draft.ab !== w.ab || A.draft.pn !== w.pn) A.draft = { ab:w.ab, pn:w.pn, pitch: existing ? existing.pitch : null, spot: existing ? existing.spot : null };
   const d = A.draft;
@@ -1684,10 +1819,10 @@ function callPanel(plays, st, w){
   const spotUI = level === "advanced" ? advGrid(d.spot, "cs", c.hand) : `<div class="pills">${pills([["up","Up"],["down","Down"],["off","Off the plate"]], "cs", d.spot)}</div>`;
   const coach = !settings.coached ? `<div class="coach"><p><b>Your first call.</b> ${A.src.kind !== "live" ? "kK skipped ahead to it, and Next call jumps to the one after. " : ""}The book shows what he usually throws here. Tap the pitch you expect, then where it crosses.${level === "base" ? " Up and Down include pitches above or below the zone, and Off the plate means wide." : ""}</p><button class="ghost sm" data-act="coached">Got it</button></div>` : "";
   const stamp = existing && A.justLocked === w.ab + "-" + w.pn;
-  const headLabel = existing ? `<div class="k lockedlab">Locked: ${esc(callLabel(existing))}</div>` : `<div class="k">${esc(w.reasons.join(", "))}</div>`;
+  const headLabel = existing ? `<div class="k lockedlab">Locked: ${esc(callLabel(existing))}</div>` : `<div class="k">${esc((w.cross ? ["Their pitcher"] : []).concat(w.reasons).join(", "))}</div>`;
   return `<section class="card callcard ${existing ? "is-locked" : ""} ${stamp ? "stamp" : ""} ${!existing && Date.now() - (A.pulse||0) < 1600 ? "pulse" : ""}">
     <div class="callhead"><div>${headLabel}<div class="who">${who}</div></div><div class="cnt" aria-label="Count">${st.balls}-${st.strikes}</div></div>
-    ${coach}${st.cur.pitches.length ? `<div class="sofar"><span class="ml">So far</span>${st.cur.pitches.map(e => pitchChip(e, c.hand)).join("")}</div>` : ""}${bookLine(c, level)}
+    ${coach}${st.cur.pitches.length ? `<div class="sofar"><span class="ml">So far</span>${st.cur.pitches.map(e => pitchChip(e, c.hand)).join("")}</div>` : ""}${bookLine(c, level, plays)}
     <div class="step">${d.pitch ? "Pitch" : "1. Call the pitch"}</div><div class="pills ${pitchItems.length === 4 ? "two" : ""}">${pills(pitchItems, "cp", d.pitch)}</div>
     <div class="step">${d.spot != null ? "Spot" : "2. Call the spot"}</div>${spotUI}
     ${existing ? `<p class="locked" role="status"><b>✓ Locked in.</b> The book is calling ${esc(pitchName(existing.bookCall.pitch, existing.level).toLowerCase())}, ${esc(spotName(existing.bookCall.spot, existing.level).toLowerCase())}. You can change your call until the pitch is thrown.</p>` : `<p class="foot">Your call locks when you pick the spot.${A.src.kind !== "live" ? " kK waits for your call." : ""}</p>`}
@@ -1706,30 +1841,63 @@ function advGrid(sel, act, hand){
   return `<div class="advgrid">${b("C-high","Chase high","ch top")}${b(left, left === "C-in" ? "Chase in" : "Chase away","ch side l")}<div class="inner">${inner}</div>${b(right, right === "C-in" ? "Chase in" : "Chase away","ch side r")}${b("C-low","Chase low","ch bot")}<svg class="plate" viewBox="0 0 44 18" aria-hidden="true"><path d="M2 2 H42 V9 L22 16 L2 9 Z"/></svg></div>
     <div class="foot center">${tv ? "TV view" : "Catcher's view"}. The hitter stands on the ${hitterOnLeft ? "left" : "right"}, the inside edge.</div>`;
 }
+// What the pitch did, the way the TV booth would say it.
+function pitchOutcome(c, e, plays){
+  const v = plays.find(x => x.src.about.atBatIndex === c.ab), p = v ? v.src : null;
+  const d = e.details, bat = p ? last(p.matchup.batter.id) : "He";
+  const ended = v && v.complete && c.pn === v.pitches.length;
+  if (ended) {
+    const ev = p.result.eventType;
+    if (ev === "strikeout" || ev === "strikeout_double_play") return d.code === "C" ? `Strike three looking, and ${bat} sits` : `Strike three swinging, and ${bat} sits`;
+    if (ev === "walk") return `Ball four, and ${bat} walks`;
+    if (ev === "hit_by_pitch") return `${bat} is hit by the pitch`;
+    return `${p.result.event || "In play"}`;
+  }
+  if (d.isInPlay) return "In play";
+  const cn = e.count ? `${Math.min(3, e.count.balls)}-${Math.min(2, e.count.strikes)}` : "";
+  const word = d.isBall ? "Ball" : (d.code === "F" || d.code === "L") ? "Foul" : d.code === "T" ? "Foul tip" : (d.code === "S" || d.code === "W" || d.code === "M") ? "Swinging strike" : d.isStrike ? "Called strike" : cap((d.description || "Pitch").toLowerCase());
+  return cn ? `${word}, ${cn}` : word;
+}
+function verdictOf(g, bg, c){
+  if (c.against && g.pitchRight && !bg.pitchRight) return { title:"Beat the book", star:true };
+  if (g.pitchRight && g.spotCredit === 1) return { title:"Called it" };
+  if (g.pitchRight) return { title: g.spotCredit ? "Had the pitch, close on the spot" : "Had the pitch" };
+  if (g.spotCredit === 1) return { title: g.pitchCredit ? "Had the spot, close on the pitch" : "Had the spot" };
+  if (g.pitchCredit) return { title:"Close on the pitch" };
+  if (g.spotCredit) return { title:"Close on the spot" };
+  return { title:"Missed it" };
+}
+function gloveAsk(c, deferred){
+  const ab = deferred ? ` data-ab="${c.ab}" data-pn="${c.pn}"` : "";
+  return `<div class="pills">${[["yes","Yes"],["missed","Missed"],["unseen","Couldn't see"]].map(([k,l]) => `<button data-act="glove" data-v="${k}"${ab}>${l}</button>`).join("")}</div>`;
+}
 function flashCard(plays){
   if (!A.flash) return "";
   const c = A.rec.calls.find(x => x.ab === A.flash.ab && x.pn === A.flash.pn); if (!c) return "";
   const e = findPitch(c.ab, c.pn); if (!e || !e.details.type) return "";
   const a = actualOf(e, c.hand), g = E.grade(c, a, c.level), bg = E.grade({ pitch:c.bookCall.pitch, spot:c.bookCall.spot }, a, c.level);
   const sp = a.spot ? spotName(c.level === "advanced" ? a.spot.adv : a.spot.base, c.level).toLowerCase() : "untracked";
-  const title = g.pitchRight && g.spotCredit === 1 ? "Called it" : g.pitchRight ? "Had the pitch" : g.spotCredit === 1 ? "Had the spot" : g.spotCredit ? "Close on the spot" : "Missed it";
+  const vd = verdictOf(g, bg, c);
   const plWord = k => c.level === "advanced" ? E.tn(k) + "s" : k === "offspeed" ? "offspeed pitches" : E.FAM_NAME[k].toLowerCase() + "s";
   const why = c.bookPct ? ` ${last(c.pitcherId)} throws ${plWord(c.bookCall.pitch)} ${c.bookPct}% of the time in this spot.` : "";
-  const vsBook = c.against ? (g.pitchRight && !bg.pitchRight ? "You beat the book on this one." : bg.pitchRight && !g.pitchRight ? "The book had it." + why : "") : "";
+  const odds = c.callProb != null ? ` His habits gave that call about a ${Math.max(1, Math.round(c.callProb * 100))}% chance.` : "";
+  const vsBook = c.against ? (g.pitchRight && !bg.pitchRight ? "You went against the book and were right." + odds : bg.pitchRight && !g.pitchRight ? "The book had it." + why : "") : "";
   const mark = x => x ? `<span class="ok">✓</span>` : `<span class="no">✗</span>`;
+  const half = x => x === 1 ? mark(true) : x ? `<span class="half">½</span>` : mark(false);
   const ask = A.chip && A.chip.ab === c.ab && A.chip.pn === c.pn;
   const fresh = A.flashShown !== c.ab + "-" + c.pn; A.flashShown = c.ab + "-" + c.pn;
-  return `<section class="card flash ${g.pitchRight ? "good" : ""} ${fresh ? "rise" : ""}" role="status">
-    <div class="verdict">${esc(title)}</div>
+  return `<section class="card flash ${g.pitchRight ? "good" : ""} ${vd.star ? "star" : ""} ${fresh ? "rise" : ""}" role="status">
+    <div class="outcome">${esc(pitchOutcome(c, e, plays))}</div>
     <p class="actual">${esc(cap(E.tn(a.type)))}${a.speed ? `, ${Math.round(a.speed)} mph` : ""}, ${esc(sp)}.</p>
-    <div class="vs"><div><span class="k">You</span> pitch ${mark(g.pitchRight)} spot ${mark(g.spotCredit === 1)}</div><div><span class="k">Book</span> pitch ${mark(bg.pitchRight)} spot ${mark(bg.spotCredit === 1)}</div></div>
+    <div class="verdict">${vd.star ? `<span class="starmark" aria-hidden="true">★</span> ` : ""}${esc(vd.title)}</div>
+    <div class="vs"><div><span class="k">You</span> pitch ${half(g.pitchCredit)} spot ${half(g.spotCredit)}</div><div><span class="k">Book</span> pitch ${half(bg.pitchCredit)} spot ${half(bg.spotCredit)}</div></div>
     ${vsBook ? `<p class="foot">${esc(vsBook)}</p>` : ""}
-    ${ask ? `<div class="glove"><div class="k">Hit the glove?</div><p class="chipq">Did the pitch land where the catcher set up?</p><div class="pills"><button data-act="glove" data-v="yes">Yes</button><button data-act="glove" data-v="missed">Missed</button><button data-act="glove" data-v="unseen">Couldn't see</button></div><div class="cbar"><i id="chipbar"></i></div></div>` : c.glove && c.glove.answer !== "timeout" ? `<p class="foot">Glove: ${c.glove.answer === "yes" ? "he hit it" : c.glove.answer === "missed" ? "he missed it" : "you couldn't see it"}.</p>` : ""}</section>`;
+    ${ask ? `<div class="glove"><div class="k">Hit the glove?</div><p class="chipq">Did the pitch land where the catcher set up?</p>${gloveAsk(c, false)}<div class="cbar"><i id="chipbar"></i></div></div>` : c.gloveDeferred && !c.glove ? `<p class="foot">kK will ask about the glove after the at-bat.</p>` : c.glove && c.glove.answer !== "timeout" ? `<p class="foot">Glove: ${c.glove.answer === "yes" ? "he hit it" : c.glove.answer === "missed" ? "he missed it" : "you couldn't see it"}.</p>` : ""}</section>`;
 }
 function pitchChip(e, hand){
-  const t = e.details.type ? e.details.type.code : null, sp = E.spotOf(e.pitchData, hand);
+  const t = e.details.type ? e.details.type.code : null, sp = E.spotOf(e.pitchData, hand), adv = settings.level === "advanced";
   const d = e.details, res = d.isInPlay ? "in play" : d.code === "F" ? "foul" : d.isBall ? "ball" : (d.code === "S" || d.code === "W") ? "swinging strike" : d.isStrike ? "called strike" : (d.description||"").toLowerCase();
-  return `<span class="pc"><b>${esc(t ? (E.SHORT[t]||t) : "Untracked")}</b>${e.pitchData && e.pitchData.startSpeed ? " " + Math.round(e.pitchData.startSpeed) : ""}${sp ? ", " + esc(E.LOC_WORDS[sp.base]) : ""}, <i>${esc(res)}</i></span>`;
+  return `<span class="pc"><b>${esc(t ? (E.SHORT[t]||t) : "Untracked")}</b>${e.pitchData && e.pitchData.startSpeed ? " " + Math.round(e.pitchData.startSpeed) : ""}${sp ? ", " + esc(adv ? E.ADV_NAME[sp.adv].toLowerCase() : E.LOC_WORDS[sp.base]) : ""}, <i>${esc(res)}</i></span>`;
 }
 function contextStrip(plays, st, callOpen){
   if (!st.cur) return "";
@@ -1750,7 +1918,7 @@ function contextStrip(plays, st, callOpen){
   const tto = isStarter && times >= 2 && !v.complete ? `This is ${last(bid)}'s ${E.ordinal(times)} time facing him today. ` : "";
   return `<section class="card ctx">
     ${callOpen ? "" : `<div class="row3"><div class="k">${v.complete ? "Last at-bat" : "This at-bat"}</div><div class="seq">${v.pitches.length ? v.pitches.map(e => pitchChip(e, hand)).join("") : `<span class="foot">No pitches yet.</span>`}</div></div>`}
-    <div class="row3"><div class="k">Last time up</div><div class="seq">${prev ? prev.pitches.map(e => pitchChip(e, prev.src.matchup.batSide.code)).join("") + `<span class="foot">${esc(E.ordinal(prev.src.about.inning))} inning: ${esc(prev.src.result.event)}.</span>` : `<span class="foot">This is ${esc(last(bid))}'s first look at ${esc(last(pid))} today.</span>`}</div></div>
+    <div class="row3"><div class="k">${v.complete ? "The time before" : "Last time up"}</div><div class="seq">${prev ? prev.pitches.map(e => pitchChip(e, prev.src.matchup.batSide.code)).join("") + `<span class="foot">${esc(E.ordinal(prev.src.about.inning))} inning: ${esc(prev.src.result.event)}.</span>` : `<span class="foot">${v.complete ? "That was" : "This is"} ${esc(last(bid))}'s first look at ${esc(last(pid))} today.</span>`}</div></div>
     ${tto || velo ? `<div class="row3"><div class="k">Today</div><div class="foot">${esc(tto + velo)}</div></div>` : ""}
   </section>`;
 }
@@ -1763,6 +1931,8 @@ function lastAbCard(plays){
     grade = `<div class="abgrade">${mine.map(c => `<div class="gl"><span class="${c.g.pitchRight?"ok":"no"}" aria-label="${c.g.pitchRight?"Right":"Wrong"}">${c.g.pitchRight?"✓":"✗"}</span> On ${esc(c.count)} you called ${esc(callLabel(c))}${c.against ? " (against the book)" : ""}. It was a ${esc(E.tn(c.actual.type))}${c.actual.spot ? ", " + esc(spotName(c.level === "advanced" ? c.actual.spot.adv : c.actual.spot.base, c.level).toLowerCase()) : ""}.</div>`).join("")}
       <div class="foot">You had ${you} of ${mine.length} pitches and ${sp} of ${mine.length} spots. The book had ${bk} of ${mine.length} pitches.</div></div>`;
   }
+  const later = settings.glove ? A.rec.calls.filter(c => c.ab === v.src.about.atBatIndex && c.gloveDeferred && !c.glove && c.actual) : [];
+  if (later.length) grade += `<div class="glove"><div class="k">Hit the glove?</div>${later.map(c => `<p class="chipq">The ${esc(E.tn(c.actual.type))} on ${esc(c.count)}: did it land where the catcher set up?</p>${gloveAsk(c, true)}`).join("")}</div>`;
   const voided = A.rec.calls.filter(c => c.ab === v.src.about.atBatIndex && c.void);
   return `<section class="card read"><div class="k">The read</div><p>${esc(E.sentence(v, done.slice(0,-1), A.feed))}</p>${grade}${voided.length ? `<p class="foot">${plural(voided.length,"call")} did not count because ${esc(voided[0].void)}.</p>` : ""}</section>`;
 }
@@ -1771,23 +1941,27 @@ function finalCard(plays){
   const sea = S.get("kk-season", { games:[] }), pool = sea.games.filter(gm => !!gm.demo === (A.src.kind === "demo"));
   const sT = pool.reduce((a,gm) => { a.ag += gm.line.against||0; a.y += gm.line.againstYou||0; a.b += gm.line.againstBook||0; return a; }, { ag:0, y:0, b:0 });
   const seasonLine = sT.ag && pool.length > 1 ? ` Across your ${A.src.kind === "demo" ? "demo games" : "season"}, you are right ${sT.y} of ${sT.ag} times against the book, and the book is right ${sT.b}.` : "";
-  const tonight = `You went against the book ${plural(L.against,"time")} and were ${L.againstYou ? "right " + plural(L.againstYou,"time") : "never right"}. The book was right ${plural(L.againstBook,"time")} on those same pitches`;
-  const verdictOnly = !L.against ? "You agreed with the book on every call, so tonight was a tie by design." : L.against < 5 ? "Too few calls against the book to name a winner tonight." : L.againstYou > L.againstBook ? "You out-read the book tonight." : L.againstYou === L.againstBook ? "Even with the book tonight." : "The book read the pitchers better tonight.";
-  const headline0 = !L.n ? "You did not call any pitches in this game."
-    : !L.against ? "You agreed with the book on every call, so tonight was a tie by design. Go against it when the at-bat tells you to." + seasonLine
-    : L.against < 5 ? `${tonight}. That is too few to name a winner for one night.${seasonLine}`
-    : `${tonight}${L.againstYou > L.againstBook ? ", so you out-read it tonight." : L.againstYou === L.againstBook ? ", so it was even." : ", so the book read the pitchers better tonight."}${seasonLine}`;
+  // Against the book, the bar is the odds: how often his own habits say those calls should come in.
+  const exp = L.exp != null ? L.exp : 0, expTxt = exp.toFixed(1).replace(/\.0$/, "");
+  const odds = L.against ? ` His habits said you would be right about ${expTxt} ${exp === 1 ? "time" : "times"}` : "";
+  const verdictOnly0 = !L.against ? "You rode with the book all night, so there was no duel. Go against it when the at-bat tells you to."
+    : L.against < 3 ? `You went against the book ${plural(L.against,"time")} and were right ${L.againstYou ? plural(L.againstYou,"time") : "on none of them"}. That is too few to call for one night.`
+    : L.againstYou >= exp + 1 ? `You went against the book ${plural(L.against,"time")} and were right ${L.againstYou ? plural(L.againstYou,"time") : "on none of them"}.${odds}, so you beat the odds.`
+    : L.againstYou <= exp - 1 ? `You went against the book ${plural(L.against,"time")} and were right ${L.againstYou ? plural(L.againstYou,"time") : "on none of them"}.${odds}, so his habits won tonight.`
+    : `You went against the book ${plural(L.against,"time")} and were right ${L.againstYou ? plural(L.againstYou,"time") : "on none of them"}.${odds}, so you landed right about on the odds.`;
+  const verdictOnly = verdictOnly0.replace("right on none of them.", "not right on any of them.").replace("1 time and were right 1 time", "once and were right").replace("book 1 time and", "book once and");
+  const headline0 = !L.n ? "You did not call any pitches in this game." : verdictOnly + seasonLine;
   const best = bestRead(A.rec.calls);
-  const duel = L.against ? [L.againstYou, L.againstBook, "Right when you went against the book"] : [L.you, L.book, "Pitches right"];
+  const duel = L.against >= 3 ? [L.againstYou, expTxt, "Right when you went against the book, and what his habits expected", "The odds"] : [L.you, L.book, "Pitches right", "The book"];
   return `<section class="card final"><div class="k">Final</div>
     <h2 class="fscore">${esc(teamWord(sd.my))} ${f.my}, ${esc(teamWord(sd.opp))} ${f.op}</h2>
-    ${L.n ? `<div class="duel" aria-label="${esc(duel[2])}: you ${duel[0]}, the book ${duel[1]}"><div><b>${duel[0]}</b><span>You</span></div><div class="vsw">vs</div><div><b>${duel[1]}</b><span>The book</span></div></div><p class="foot center">${esc(duel[2])}</p>` : ""}
+    ${L.n ? `<div class="duel" aria-label="${esc(duel[2])}: you ${duel[0]}, ${esc(duel[3].toLowerCase())} ${duel[1]}"><div><b>${duel[0]}</b><span>You</span></div><div class="vsw">vs</div><div><b>${duel[1]}</b><span>${esc(duel[3])}</span></div></div><p class="foot center">${esc(duel[2])}</p>` : ""}
     <p class="headline">${esc(L.n ? verdictOnly + seasonLine : headline0)}</p>
     ${best ? `<p>Your best read was ${esc(best)}.</p>` : ""}
     ${L.n ? `<p class="foot">On spots, you were right on ${L.spot} of ${plural(L.n,"call")}, and the book was right on ${L.bspot}.</p>` : ""}
     <div class="boxline"><div><b>${L.n}</b><span>${L.n===1?"call":"calls"}</span></div><div><b>${L.you}</b><span>${L.you===1?"pitch":"pitches"}</span></div><div><b>${L.spot}</b><span>${L.spot===1?"spot":"spots"}</span></div><div><b>${L.both}</b><span>both right</span></div></div>
     <h3>Keys</h3>${f.keys.map(k => `<div class="key ${k.hit?"won":"lost"}"><b>${k.hit?"Hit":"Missed"}:</b> ${esc(k.text)} <span class="foot">${esc(cap(k.show))}.</span></div>`).join("")}
-    <p>${dk ? `The deciding key was "${esc(dk.text.replace(/\.$/,""))}."` : "None of your keys decided this one."}</p>
+    <p>${dk ? `The deciding key was "${esc(dk.text.replace(/\.$/,""))}."${f.decidingImp ? " Its plays moved the win chance toward the final result more than any other key's did." : ""}` : "None of your keys decided this one."}</p>
     ${f.decidingAB ? `<p>The ${esc(teamWord(f.won ? sd.my : sd.opp))} took the lead for good on this play: ${esc(f.decidingAB.text)}${f.decidingAB.d ? `. It moved the win chance ${f.decidingAB.d} points` : ""}.</p>` : ""}
     <button class="act wide" data-act="copy">Copy my line for the group chat</button>
     <p class="foot">${A.src.kind === "demo" ? "Saved to your season and marked as a demo game. You can clear demo games in Settings." : "Saved to your season."}</p></section>`;
@@ -1817,7 +1991,7 @@ function paceTab(plays, over){
   const from = A.paceFrom != null && A.paceFrom !== cur ? A.paceFrom : null; A.paceFrom = cur;
   const inn = []; for (let i = 0; i < n / 2; i++) inn.push(`<span>${i+1}</span>`);
   return `<section class="card pace"><div class="k">${esc(me)} win chance</div>
-    <div class="paceHero">${A.rec.final ? `<b>${A.rec.final.won ? "Won" : "Lost"} ${A.rec.final.my}-${A.rec.final.op}</b><span class="muted">Started at ${Math.round(pc.line*100)}%</span>` : `<b>${Math.round(cur*100)}%</b>${h ? `<span class="${delta>=0?"ok":"no"}">${delta>=0?"+":"−"}${Math.abs(delta)} vs pregame</span>` : ""}`}</div>
+    <div class="paceHero ${A.rec.final ? "fin" : ""}">${A.rec.final ? `<b>${A.rec.final.won ? "Won" : "Lost"} ${A.rec.final.my}-${A.rec.final.op}</b><span class="muted">Started at ${Math.round(pc.line*100)}%</span>` : `<b>${Math.round(cur*100)}%</b>${h ? `<span class="${delta>=0?"ok":"no"}">${delta>=0?"+":"−"}${Math.abs(delta)} vs pregame</span>` : ""}`}</div>
     <div class="meter" role="img" aria-label="${esc(sentence)}"><div class="band" style="${lo!=null && !h.done?`left:${lo*100}%;width:${Math.max(0.6,(hi-lo)*100)}%`:"display:none"}"></div>
       <div class="fill ${delta>=0?"up":"dn"}" style="left:${Math.min(pc.line,cur)*100}%;width:${Math.abs(cur-pc.line)*100}%"></div>
       <div class="tick" style="left:${pc.line*100}%"></div><div class="dot ${from != null ? "slide" : ""}" style="left:clamp(10px, ${cur*100}%, calc(100% - 10px));${from != null ? `--from:clamp(10px, ${from*100}%, calc(100% - 10px))` : ""}"></div></div>
@@ -1967,7 +2141,7 @@ function act(b){
     A.draft = d;
     if (d.pitch != null && d.spot != null) { if (!settings.coached) { settings.coached = true; saveSettings(); } return lockCall(); }
   }
-  else if (a === "glove") return answerGlove(v);
+  else if (a === "glove") return answerGlove(v, b.dataset.ab != null ? +b.dataset.ab : null, +b.dataset.pn);
   else if (a === "key") {
     const k = A.rec.keys; A.keyMsg = null;
     if (k.includes(v)) A.rec.keys = k.filter(x=>x!==v); else if (k.length < 3) k.push(v); else A.keyMsg = "You already have three. Unpick one to swap it.";
@@ -2000,6 +2174,7 @@ appEl.addEventListener("click", e => {
 });
 applyTheme();
 window.kk = A;
+window.kkt = { windowInfo, callContext, lockCall, isOver, shareText, settings };
 if ("serviceWorker" in navigator && /^https?:/.test(location.href)) window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
 render(true);
 setInterval(() => { if (A.feed) render(false); }, 400);

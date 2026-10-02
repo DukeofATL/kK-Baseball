@@ -15,45 +15,74 @@ const KKE = (() => {
   const ADV = ["H-in","H-mid","H-away","M-in","M-mid","M-away","L-in","L-mid","L-away","C-high","C-low","C-in","C-away"];
   const ADV_NAME = { "H-in":"High in", "H-mid":"High middle", "H-away":"High away", "M-in":"Middle in", "M-mid":"Middle", "M-away":"Middle away",
     "L-in":"Low in", "L-mid":"Low middle", "L-away":"Low away", "C-high":"Chase high", "C-low":"Chase low", "C-in":"Chase in", "C-away":"Chase away" };
+  // Labels that describe the same pitch to a fan are merged, so a pitcher never shows two curveball buttons.
+  const NORM = { FO:"FS", KC:"CU", CS:"CU" };
+  const norm = t => NORM[t] || t;
   const fam = t => FAMILY[t] || null;
   const HALF_PLATE = 0.83; // feet: half of 17 inches plus the ball's radius
 
   // ---------- location ----------
   // Where a pitch crossed, relative to the hitter. Returns { base, adv } or null.
+  const BALL_R = 0.12, NEAR = 0.25; // feet
+  // Where a pitch crossed, relative to the hitter. Returns { base, adv, alt, near, mid } or null.
+  // alt: a second equally fair answer for corner pitches. near: cells across the zone edge within 3 inches. mid: belt high.
   function spotOf(pd, hand){
     if (!pd) return null;
     const c = pd.coordinates || {}, top = pd.strikeZoneTop, bot = pd.strikeZoneBottom;
     if (c.pX != null && c.pZ != null && top && bot) {
-      const x = c.pX, z = c.pZ;
-      const inside = hand === "L" ? x > 0 : x < 0;
-      const dz = z > top ? z - top : z < bot ? bot - z : 0;
+      const x = c.pX, z = c.pZ, T = top + BALL_R, B = bot - BALL_R;
+      const inside = hand === "L" ? x > 0 : x < 0, sideCell = inside ? "C-in" : "C-away";
+      const dz = z > T ? z - T : z < B ? B - z : 0;
       const dx = Math.max(0, Math.abs(x) - HALF_PLATE);
-      const mid = (top + bot) / 2;
+      const mid = (top + bot) / 2, ax = Math.abs(x);
+      const colOf = () => ax <= HALF_PLATE/3 ? "mid" : inside ? "in" : "away";
+      const rowOf = () => z > bot + (top-bot)*2/3 ? "H" : z < bot + (top-bot)/3 ? "L" : "M";
       if (dz === 0 && dx === 0) {
-        const row = z > bot + (top-bot)*2/3 ? "H" : z < bot + (top-bot)/3 ? "L" : "M";
-        const col = Math.abs(x) <= HALF_PLATE/3 ? "mid" : inside ? "in" : "away";
-        return { base: z >= mid ? "up" : "down", adv: row + "-" + col };
+        const near = [];
+        if (T - z < NEAR) near.push("C-high"); if (z - B < NEAR) near.push("C-low");
+        if (HALF_PLATE - ax < NEAR) near.push(sideCell);
+        const row = rowOf();
+        return { base: z >= mid ? "up" : "down", adv: row + "-" + colOf(), alt:null, near, mid: row === "M" };
       }
-      if (dx > dz) return { base:"off", adv: inside ? "C-in" : "C-away" };
-      return { base: z >= mid ? "up" : "down", adv: z > top ? "C-high" : "C-low" };
+      const vert = z > T ? "C-high" : z < B ? "C-low" : null;
+      const vBase = z >= mid ? "up" : "down";
+      if (dz > 0 && dx > 0) {
+        // Low and wide, or high and wide: either call is fair.
+        const primary = dx > dz ? { base:"off", adv:sideCell } : { base:vBase, adv:vert };
+        const alt = dx > dz ? { base:vBase, adv:vert } : { base:"off", adv:sideCell };
+        return Object.assign(primary, { alt, near:[], mid:false });
+      }
+      if (dx > 0) {
+        const near = dx < NEAR ? [rowOf() + "-" + (inside ? "in" : "away")] : [];
+        return { base:"off", adv:sideCell, alt:null, near, mid:false };
+      }
+      const near = dz < NEAR ? [(vert === "C-high" ? "H" : "L") + "-" + colOf()] : [];
+      return { base:vBase, adv:vert, alt:null, near, mid:false };
     }
     // Fallback to the Gameday zone number (catcher's view).
     const zn = pd.zone; if (zn == null) return null;
-    if (zn >= 11) return { base: zn <= 12 ? "up" : "down", adv: zn <= 12 ? "C-high" : "C-low" };
+    if (zn >= 11) return { base: zn <= 12 ? "up" : "down", adv: zn <= 12 ? "C-high" : "C-low", alt:null, near:[], mid:false };
     if (zn < 1 || zn > 9) return null;
     const r = Math.floor((zn-1)/3), cc = (zn-1)%3;
     const leftIsInside = hand !== "L"; // a right-handed hitter stands on the catcher's left
     const col = cc === 1 ? "mid" : (cc === 0) === leftIsInside ? "in" : "away";
-    return { base: r === 2 ? "down" : "up", adv: ["H","M","L"][r] + "-" + col };
+    return { base: r === 2 ? "down" : "up", adv: ["H","M","L"][r] + "-" + col, alt:null, near:[], mid: r === 1 };
   }
-  function advPartial(call, actual){
-    if (!call || !actual) return 0;
-    if (call === actual) return 1;
-    const [cr, cc] = call.split("-"), [ar, ac] = actual.split("-");
-    // Half credit for the right row or column inside the zone. Chase cells must be exact.
-    if (cr !== "C" && ar !== "C") return (cr === ar || cc === ac) ? 0.5 : 0;
+  function advCredit(call, sp){
+    if (!call || !sp) return 0;
+    if (call === sp.adv || (sp.alt && call === sp.alt.adv)) return 1;
+    const [cr, cc] = call.split("-"), [ar, ac] = sp.adv.split("-");
+    if (cr !== "C" && ar !== "C" && (cr === ar || cc === ac)) return 0.5; // right row or column inside the zone
+    if (sp.near && sp.near.includes(call)) return 0.5;                     // a borderline pitch, within 3 inches of the call
     return 0;
   }
+  function baseCredit(call, sp){
+    if (!call || !sp) return 0;
+    if (call === sp.base || (sp.alt && call === sp.alt.base)) return 1;
+    if (sp.mid && (call === "up" || call === "down")) return 0.5;           // belt high counts half either way
+    return 0;
+  }
+  function advPartial(call, actual){ return advCredit(call, { adv: actual, alt:null, near:[] }); }
 
   // ---------- counts ----------
   function bucket(balls, strikes){
@@ -67,21 +96,29 @@ const KKE = (() => {
   const BUCKET_NAME = { first:"on the first pitch", ahead:"at 0-1", even:"in even counts", behind:"in hitter's counts", two:"with two strikes", full:"at 3-2" };
 
   // ---------- book ----------
-  function emptyCell(){ return { n:0, type:{}, fam:{}, base:{}, adv:{} }; }
+  function emptyCell(){ return { n:0, type:{}, fam:{}, base:{}, adv:{}, pb:{}, pa:{} }; }
   function newBook(id, name){ return { id, name, n:0, cells:{}, fps:{n:0,s:0}, velo:{}, games:0 }; }
   function bookAdd(book, hand, bkt, type, spot, speed){
+    type = norm(type);
     const f = fam(type); if (!f) return;
     for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) {
       const c = book.cells[key] || (book.cells[key] = emptyCell());
       c.n++; c.type[type]=(c.type[type]||0)+1; c.fam[f]=(c.fam[f]||0)+1;
-      if (spot) { c.base[spot.base]=(c.base[spot.base]||0)+1; c.adv[spot.adv]=(c.adv[spot.adv]||0)+1; }
+      if (spot) {
+        c.base[spot.base]=(c.base[spot.base]||0)+1; c.adv[spot.adv]=(c.adv[spot.adv]||0)+1;
+        // Where each pitch goes, so the book's spot always fits the pitch it calls.
+        const pb = c.pb || (c.pb = {}), pa = c.pa || (c.pa = {});
+        const B1 = pb[f] || (pb[f] = {}), A1 = pa[type] || (pa[type] = {});
+        B1[spot.base] = (B1[spot.base]||0) + 1; A1[spot.adv] = (A1[spot.adv]||0) + 1;
+      }
     }
     if (speed) { const v = book.velo[type] || (book.velo[type] = { s:0, n:0 }); v.s += speed; v.n++; }
     book.n++;
   }
   function bookCell(book, hand, bkt){
     if (!book) return null;
-    for (const key of [hand+"|"+bkt, hand+"|*", "*|"+bkt, "*|*"]) { const c = book.cells[key]; if (c && c.n >= 15) return { cell:c, key }; }
+    // The count matters more than the hitter's side, so a thin cell falls back to the same count first.
+    for (const key of [hand+"|"+bkt, "*|"+bkt, hand+"|*", "*|*"]) { const c = book.cells[key]; if (c && c.n >= 15) return { cell:c, key }; }
     const c = book.cells["*|*"]; return c && c.n ? { cell:c, key:"*|*" } : null;
   }
   // A league-style stand-in for pitchers with no book yet.
@@ -105,7 +142,8 @@ const KKE = (() => {
   const AREA = { "C-high":3, "C-low":3, "C-in":3, "C-away":3 };
   function arsenal(book){
     const c = book && book.cells["*|*"]; if (!c || !c.n) return ["FF","SL","CH","CU"];
-    return Object.keys(c.type).filter(t => c.type[t]/c.n >= 0.03).sort((a,b)=>c.type[b]-c.type[a]);
+    const merged = {}; for (const t in c.type) merged[norm(t)] = (merged[norm(t)]||0) + c.type[t];
+    return Object.keys(merged).filter(t => merged[t]/c.n >= 0.05).sort((a,b)=>merged[b]-merged[a]);
   }
   function mixLine(book, hand, bkt, level){
     const bc = bookCell(book, hand, bkt); if (!bc) return { pitch:[], spot:[], key:null, n:0 };
@@ -116,7 +154,12 @@ const KKE = (() => {
     const bc = bookCell(book, hand, bkt);
     if (!bc) return level === "advanced" ? { pitch:"FF", spot:"H-away" } : { pitch:"fastball", spot:"up" };
     const c = bc.cell;
-    return level === "advanced" ? { pitch: argmax(c.type) || "FF", spot: argmax(c.adv, AREA) || "M-away" } : { pitch: argmax(c.fam) || "fastball", spot: argmax(c.base) || "up" };
+    if (level === "advanced") {
+      const pitch = argmax(c.type) || "FF", given = c.pa && c.pa[pitch];
+      return { pitch, spot: argmax(given && Object.keys(given).length ? given : c.adv, AREA) || "M-away" };
+    }
+    const pitch = argmax(c.fam) || "fastball", given = c.pb && c.pb[pitch];
+    return { pitch, spot: argmax(given && Object.keys(given).length ? given : c.base) || "up" };
   }
   function weights(book, hand, bkt, level, call){
     const bc = bookCell(book, hand, bkt);
@@ -126,15 +169,22 @@ const KKE = (() => {
     const ps = level === "advanced" ? prob(c.adv, call.spot, c.n, 13) : prob(c.base, call.spot, c.n, 3);
     return { wp: Math.min(5, 1/pp), ws: Math.min(5, 1/ps) };
   }
+  // The book's chance that the pitcher throws this pitch here, used to set the odds on a call.
+  function pitchProb(book, hand, bkt, level, pitch){
+    const bc = bookCell(book, hand, bkt); if (!bc) return level === "advanced" ? 0.25 : 1/3;
+    const c = bc.cell;
+    return level === "advanced" ? prob(c.type, norm(pitch), c.n, Math.max(3, Object.keys(c.type).length)) : prob(c.fam, pitch, c.n, 3);
+  }
   // Grade a call against the pitch. The glove answer never affects the grade.
   function grade(call, actual, level){
-    const pitchRight = level === "advanced" ? call.pitch === actual.type : call.pitch === fam(actual.type);
-    let spotCredit = 0;
-    if (actual.spot) spotCredit = level === "advanced" ? advPartial(call.spot, actual.spot.adv) : (call.spot === actual.spot.base ? 1 : 0);
-    return { pitchRight, spotCredit };
+    const at = norm(actual.type);
+    const pitchRight = level === "advanced" ? norm(call.pitch) === at : call.pitch === fam(at);
+    const pitchCredit = pitchRight ? 1 : (level === "advanced" && fam(norm(call.pitch)) === fam(at) ? 0.5 : 0);
+    const spotCredit = actual.spot ? (level === "advanced" ? advCredit(call.spot, actual.spot) : baseCredit(call.spot, actual.spot)) : 0;
+    return { pitchRight, pitchCredit, spotCredit };
   }
   function pointsFor(g, w, big){
-    let p = (g.pitchRight ? w.wp : 0) + g.spotCredit * w.ws;
+    let p = (g.pitchCredit != null ? g.pitchCredit : (g.pitchRight ? 1 : 0)) * w.wp + g.spotCredit * w.ws;
     if (g.pitchRight && g.spotCredit === 1) p += 1;
     return Math.round(p * (big ? 2 : 1) * 10) / 10;
   }
@@ -390,9 +440,13 @@ const KKE = (() => {
   }
 
   // ---------- the read: one factual sentence per plate appearance ----------
+  const lastOf = p => p.useLastName || p.lastName || p.boxscoreName || p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0];
   function nm(id, feed){
     const p = feed.gameData.players["ID"+id]; if (!p) return "He";
-    return p.useLastName || p.lastName || p.boxscoreName || p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"").split(" ").slice(-1)[0];
+    const ln = lastOf(p);
+    // Two players with the same last name (two Smiths) get first names too.
+    if (!feed._dupes) { const seen = {}; feed._dupes = {}; for (const k in feed.gameData.players) { const q = lastOf(feed.gameData.players[k]); if (seen[q]) feed._dupes[q] = true; seen[q] = true; } }
+    return feed._dupes[ln] ? p.fullName.replace(/\s+(Jr\.|Sr\.|II|III|IV)$/,"") : ln;
   }
   const tn = t => TYPE_NAME[t] || "pitch";
   function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
@@ -412,18 +466,21 @@ const KKE = (() => {
     const prevLastE = prev ? prev.pitches.filter(e => e.details.type).pop() : null;
     const echo = prevLastE ? (prevLastE.details.type.code === lt ? `, the same pitch that ended their matchup in the ${ordinal(prev.src.about.inning)}` : `, after a ${tn(prevLastE.details.type.code)} ended their matchup in the ${ordinal(prev.src.about.inning)}`) : "";
     const before = P.slice(0,-1);
-    const fbUp = before.filter(e => fam(e.details.type.code) === "fastball" && (spotOf(e.pitchData, hand)||{}).base === "up").length;
+    const fbUp = before.filter(e => { const sp = spotOf(e.pitchData, hand); return fam(e.details.type.code) === "fastball" && sp && (sp.adv[0] === "H" || sp.adv === "C-high"); }).length;
     const n = P.length, pitches = `${n} pitch${n===1?"":"es"}`;
+    const st = pitchStates(p).filter(x => x.e.details.type && x.e.details.type.code); const ls0 = st[st.length-1];
+    const on = ls0 ? ` on ${ls0.balls}-${ls0.strikes}` : "";
     const whiffedBefore = before.some(e => e.details.type.code === lt && (e.details.code === "S" || e.details.code === "W"));
     if (ev === "strikeout" || ev === "strikeout_double_play") {
       const how = last.details.code === "C" ? "caught him looking at" : "got him swinging at";
-      if (whiffedBefore) return `${pit} struck out ${bat} in ${pitches}. He ${how} a ${tn(lt)} ${lw}, the same pitch ${bat} had already swung through in the at-bat.`;
-      if (fbUp >= 2 && fam(lt) !== "fastball") return `${pit} showed ${bat} ${fbUp} fastballs up, then ${how} a ${tn(lt)} ${lw}${echo}.`;
-      return `${pit} struck out ${bat} in ${pitches}, and he ${how} a ${tn(lt)} ${lw}${echo}.`;
+      if (whiffedBefore) return `${pit} struck out ${bat} in ${pitches}. He ${how} a ${tn(lt)} ${lw}${on}, the same pitch ${bat} had already swung through in the at-bat.`;
+      if (fbUp >= 2 && fam(lt) !== "fastball") return `${pit} showed ${bat} ${fbUp} fastballs up, then ${how} a ${tn(lt)} ${lw}${on}${echo}.`;
+      return `${pit} struck out ${bat} in ${pitches}, and he ${how} a ${tn(lt)} ${lw}${on}${echo}.`;
     }
     if (ev === "walk") {
       const states = pitchStates(p), behind = states.find(x => x.balls - x.strikes >= 2), full = states.some(x => x.balls === 3 && x.strikes === 2);
       const zone = P.filter(e => { const sp = spotOf(e.pitchData, hand); return sp && sp.adv[0] !== "C"; }).length;
+      if (n === 4 && P.every(e => e.details.isBall)) return `${pit} walked ${bat} on four straight balls. Ball four was a ${tn(lt)} ${lw}.`;
       const lead = behind ? `fell behind ${behind.balls}-${behind.strikes} and ` : full ? "battled to a full count and " : "";
       const zoneTxt = zone === 0 ? "without one of them in the strike zone" : `with ${zone} of them in the strike zone`;
       return `${pit} ${lead}walked ${bat} on ${pitches}, ${zoneTxt}. Ball four was a ${tn(lt)} ${lw}.`;
@@ -433,15 +490,15 @@ const KKE = (() => {
     if (HITS.has(ev)) {
       const verb = { single:"singled", double:"doubled", triple:"tripled", home_run:"homered" }[ev];
       const sp = spotOf(last.pitchData, hand), centered = sp && ["M-mid","H-mid","M-in","M-away"].includes(sp.adv);
-      return `${bat} ${verb} on a ${tn(lt)} ${lw}${ls ? ` at ${Math.round(ls)} mph off the bat` : ""}${centered && ev !== "single" ? ", a pitch that caught a lot of the plate" : ""}${echo}.`;
+      return `${bat} ${verb} on a ${on ? on.trim().replace("on ", "") + " " : ""}${tn(lt)} ${lw}${ls ? ` at ${Math.round(ls)} mph off the bat` : ""}${centered && ev !== "single" ? ", a pitch that caught a lot of the plate" : ""}${echo}.`;
     }
-    if (ev === "sac_fly") return `${bat} drove a ${tn(lt)} ${lw} deep enough for a sacrifice fly.`;
-    if (ev === "grounded_into_double_play" || ev === "double_play") return `${pit} got a double play from ${bat} on a ${tn(lt)} ${lw}.`;
-    return `${pit} retired ${bat} on a ${tn(lt)} ${lw} after ${pitches}${ls && ls >= 100 ? `, though it left the bat at ${Math.round(ls)} mph` : ""}${echo}.`;
+    if (ev === "sac_fly") return `${bat} drove a ${tn(lt)} ${lw}${on} deep enough for a sacrifice fly.`;
+    if (ev === "grounded_into_double_play" || ev === "double_play") return `${pit} got a double play from ${bat} on a ${tn(lt)} ${lw}${on}.`;
+    return `${pit} retired ${bat} on a ${tn(lt)} ${lw}${on} after ${pitches}${ls && ls >= 100 ? `, though it left the bat at ${Math.round(ls)} mph` : ""}${echo}.`;
   }
 
-  return { SHORT, FAMILY, TYPE_NAME, FAM_NAME, LOC_NAME, LOC_WORDS, ADV, ADV_NAME, BUCKET_NAME, fam, spotOf, advPartial, bucket,
-    newBook, bookAdd, bookCell, bookCall, weights, grade, pointsFor, arsenal, mixLine, genericBook,
+  return { norm, advCredit, baseCredit, SHORT, FAMILY, TYPE_NAME, FAM_NAME, LOC_NAME, LOC_WORDS, ADV, ADV_NAME, BUCKET_NAME, fam, spotOf, advPartial, bucket,
+    newBook, bookAdd, bookCell, bookCall, weights, pitchProb, PHRASE, grade, pointsFor, arsenal, mixLine, genericBook,
     paProbs, simulate, halfInning, rng, pyth, pythPregame, regressERA, shiftWP, logit, sigm,
     view, stateOf, pitchStates, lastCount, completedHalves, goAhead, syncOffset, basesBefore, basesAfter,
     gameStats, keyCatalog, gradeKey, sentence, ordinal, ON_BASE, tn, nm };
